@@ -48,6 +48,13 @@ void shi_fri(PACK *recv_pack);
 void rel_fri(PACK *recv_pack);     
 void chat_one(PACK *recv_pack);  
 
+User *U_read();     
+Relation *R_read();         
+Recordinfo *RC_read();
+void Insert_RC(Recordinfo *pNew);
+void Insert_R(Relation *pNew);
+void Delete_R(Relation *pNew);
+
 
 MYSQL mysql;
 pthread_mutex_t mutex;
@@ -128,6 +135,9 @@ int main()
     
 
     printf("服务器启动成功！\n");
+    printf("等待客户端的接入中...\n");
+    
+    User *t = U_read();
 
     while(1)
     {
@@ -153,6 +163,23 @@ int main()
                 {
                     close(events[i].data.fd);
                     perror("revc");
+                    continue;
+                }
+                else if(ret == 0)
+                {
+                    ev.data.fd = events[i].data.fd;
+                    while(t)
+                    {
+                        if(t->fd == ev.data.fd)
+                        {
+                            t->user_state = OFFLINE;
+                            break;
+                        }
+                        t = t->next;
+                    }
+                    printf("fd: %d 的用户退出\n",ev.data.fd);
+                    epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, &ev);
+                    close(events[i].data.fd);
                     continue;
                 }
 				if (recv_pack.type == EXIT)
@@ -732,10 +759,7 @@ void rel_fri(PACK *recv_pack_t)
 void chat_one(PACK *recv_pack_t)
 {
 	PACK *recv_pack = (PACK *)recv_pack_t;
-    char need[1000];
-    
-    
-    
+     
     printf("111\n");
     int flag = CHAT_ONE;
     char ch[5];
@@ -961,3 +985,5 @@ void Insert_RC(Recordinfo *pNew)
     p->next = pNew;
     pNew->next = NULL;
 }
+
+
