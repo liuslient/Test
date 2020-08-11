@@ -69,6 +69,7 @@ int main()
     sleep(1);
 
     printf("服务器启动成功！\n");
+    printf("等待客户端的接入\n");
 
     pHead = U_read();
     User *t = pHead;
@@ -114,7 +115,7 @@ int main()
                         }
                         t = t->next;
                     }
-                    printf("log off(fd): %d\n",ev.data.fd);
+                    printf("fd: %d  客户端退出\n",ev.data.fd);
                     epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, &ev);
                     close(events[i].data.fd);
                     continue;
@@ -443,7 +444,6 @@ void login(PACK *recv_pack)
     }
     ch[1] = '\0';
     send_pack(fd, recv_pack, ch);
-    printf("sign:%d\n",sign);
     for(i = 0; i < sign; i++)
     {
         if((ch[0] == '1') && strcmp(recv_pack->data.send_name, Mex_Box[i].data.recv_name) == 0 && (Mex_Box[i].type == CHAT_ONE))
@@ -477,7 +477,6 @@ void login(PACK *recv_pack)
             book++;
         }
     }
-    printf("%d   %d\n",sign,book);
     if(book == sign)
         sign = book = 0;
 }
@@ -487,7 +486,7 @@ void check_fri(PACK *recv_pack)
     int flag = CHECK_FRI;
     MYSQL_RES *res = NULL;
     MYSQL_ROW row;
-    char query_str[700];
+    char query_str[1000];
     int rows;
     int i;
 
@@ -711,7 +710,7 @@ void Delete_R(Relation *pNew)
 
 void shi_fri(PACK *recv_pack)
 {
-    char query_str[1700];
+    char query_str[1000];
 
     int flag = SHI_FRI;
     char ch[5];
@@ -767,7 +766,7 @@ void rel_fri(PACK *recv_pack)
         ch[0] = '0';
     else
     {
-        q->statu_s = FRI_BLK;
+        q->statu_s = FRIEND;
         memset(query_str, 0, strlen(query_str));
         sprintf(query_str, "update relationinfo set status=%d where (name1='%s' and name2='%s') or (name1='%s' and name2='%s')", FRIEND, recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
         mysql_real_query(&mysql, query_str, strlen(query_str));
@@ -788,7 +787,7 @@ void chat_one(PACK *recv_pack)
     
     MYSQL_RES *res = NULL;
     MYSQL_ROW row;
-    char query_str[1500];
+    char query_str[1000];
     int rows;
     int fields;
     RECORD_INFO rec_info[55];
