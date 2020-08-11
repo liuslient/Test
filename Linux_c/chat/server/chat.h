@@ -176,7 +176,7 @@ void DeleteLink_R();
 void DeleteLink_RC();
 
 		
-void *Menu(void *recv_pack_t);
+void *deal(void *recv_pack_t);
 void Exit(PACK *recv_pack);   
 void registe(PACK *recv_pack);
 void login(PACK *recv_pack);
