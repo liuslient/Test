@@ -1,9 +1,9 @@
-#include "client.h"
+#include"client.h"
 
 int main(int argc, char *argv[])
 {
     struct sockaddr_in serv_addr;
-    pthread_t pid;
+    pthread_t thid;
 
     memset(&serv_addr,0,sizeof(struct sockaddr_in));
     serv_addr.sin_family = AF_INET;
@@ -19,14 +19,19 @@ int main(int argc, char *argv[])
     
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&cond, NULL);
+    
     if(login_menu() == 0)
     {
         close(sock_fd);
         return 0;
     }
-    pthread_create(&pid, NULL, get_back, NULL);
+
+    pthread_create(&thid, NULL, get_back, NULL);
+    
     Menu();
+
     close(sock_fd);
+
     return 0;
 }
 
@@ -46,7 +51,7 @@ void *get_back(void *arg)
 
         switch(recv_pack.type)
         {
-        case LOOK_FRI:
+        case CHECK_FRI:
             memcpy(&fri_info, &recv_pack.fri_info, sizeof(FRI_INFO));
             pthread_cond_signal(&cond);           
             break;
@@ -179,7 +184,7 @@ void *get_back(void *arg)
                 {
                     while(rec_info[i].message[0] != '0')
                     {
-                        printf("\t\t\e[1;35m%s = = = >%s: \e[0m%s\n",rec_info[i].name1, rec_info[i].name2, rec_info[i].message);
+                        printf("\t\t\e[1;35m%s-->%s: \e[0m%s\n",rec_info[i].name1, rec_info[i].name2, rec_info[i].message);
                         i++;
                     }
                 }
@@ -225,7 +230,7 @@ void *get_back(void *arg)
                 printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m\n");
                 printf("\n\t\t\e[1;33m按数字选择你需要的功能\e[0m\n");
                 sign_ive[sign] = ACTIVE;
-                sprintf(mes_box[sign], "加入群聊%s被拒绝", recv_pack.data.recv_name);
+                sprintf(mes_box[sign], "加入群聊%s请求被拒绝", recv_pack.data.recv_name);
                 sign++;
             }
             break;
@@ -308,8 +313,6 @@ void *get_back(void *arg)
             pthread_cond_signal(&cond);           
             break;
 
-        
-
         case CHAT_MANY:
             flag = recv_pack.data.mes[0] - '0';
             if(flag == 0)
@@ -323,7 +326,7 @@ void *get_back(void *arg)
                 printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m\n");
                 printf("\n\t\t\e[1;33m按数字选择你需要的功能\e[0m\n");
                 sign_ive[sign] = ACTIVE;
-                sprintf(mes_box[sign], "有人进入群聊%s", recv_pack.data.send_name);
+                sprintf(mes_box[sign], "群%s有人进入群聊??", recv_pack.data.send_name);
                 sign++;
             }
             else if(flag == 2)
@@ -353,7 +356,7 @@ void *get_back(void *arg)
                 {
                     while(rec_info[i].message[0] != '0')
                     {
-                        printf("\t\t\e[1;35m%s = = = >%s: \e[0m%s\n",rec_info[i].name1, rec_info[i].name2, rec_info[i].message);
+                        printf("\t\t\e[1;35m%s-->%s: \e[0m%s\n",rec_info[i].name1, rec_info[i].name2, rec_info[i].message);
                         i++;
                     }
                 }
@@ -419,7 +422,7 @@ int login_menu()
     int choice;
     do
     {
-        printf("\n\t\t\033[;34m\33[1m*******************************\033[0m\n");
+         printf("\n\t\t\033[;34m\33[1m*******************************\033[0m\n");
         printf("\t\t\033[;34m\33[1m*\033[0m        1.登陆               \033[;34m\33[1m*\033[0m \n");
         printf("\t\t\033[;34m\33[1m*\033[0m        2.注册               \033[;34m\33[1m*\033[0m \n");
         printf("\t\t\033[;34m\33[1m*\033[0m        0.退出               \033[;34m\33[1m*\033[0m \n");
@@ -502,7 +505,7 @@ int login()
 
     printf("\t\t请输入账号名称：");
     scanf("%s",login_name);
-    getchar();               
+    getchar();                          
     printf("\t\t请输入账号密码：");
     scanf("%s",login_passwd);
     system("clear");
@@ -593,7 +596,7 @@ void Menu_friends()
         switch(choice)
         {
         case 1:
-            look_fri();
+            check_fri();
             break;
 
         case 2:
@@ -615,7 +618,7 @@ void Menu_friends()
         case 6:
         	rel_fri();
         	break;
-
+        	
         case 7:
             check_mes_fri();
             break;
@@ -626,9 +629,9 @@ void Menu_friends()
     }while(choice != 0);
 }
 
-void look_fri()
+void check_fri()
 {
-    int flag = LOOK_FRI;
+    int flag = CHECK_FRI;
     char mes[MAX_CHAR];
     bzero(mes, MAX_CHAR);
     memset(&fri_info, 0, sizeof(fri_info));
@@ -651,7 +654,7 @@ void look_fri()
                 pthread_cond_wait(&cond, &mutex);
             }
             else if(fri_info.friends_status[i] == 2)
-                printf("\t\t\e[1;34m        ***%s***\e[0m\n",fri_info.friends[i]);
+                printf("\t\t\e[1;31m        ***%s***\e[0m\n",fri_info.friends[i]);
         }
     }
     pthread_mutex_unlock(&mutex);
@@ -662,21 +665,21 @@ void add_fri()
     int i;
     int flag = ADD_FRI;
     pthread_mutex_lock(&mutex);
-    char friend[MAX_CHAR];
-    printf("\t\t你想要添加的好友名称：");
-    scanf("%s",friend);
-    send_pack(flag, user, friend, "0");
+    char friend_add[MAX_CHAR];
+    printf("\t\t输入要添加的好友名称：");
+    scanf("%s",friend_add);
+    send_pack(flag, user, friend_add, "0");
     pthread_mutex_unlock(&mutex);
 }
 
 void del_fri()
 {
     int flag = DEL_FRI;
-    char friend[MAX_CHAR];
+    char friend_del[MAX_CHAR];
     pthread_mutex_lock(&mutex);
-    printf("\t\t你想要删除的好友名称：");
-    scanf("%s",friend);
-    send_pack(flag, user, "server", friend);
+    printf("\t\t输入要删除的好友名称：");
+    scanf("%s",friend_del);
+    send_pack(flag, user, "server", friend_del);
     pthread_cond_wait(&cond, &mutex);
     pthread_mutex_unlock(&mutex);
 }
@@ -684,11 +687,11 @@ void del_fri()
 void shi_fri()
 {
     int flag = SHI_FRI;
-    char friend[MAX_CHAR];
+    char friend_shi[MAX_CHAR];
     pthread_mutex_lock(&mutex);
-    printf("\t\t你想要屏蔽的好友名称：");
-    scanf("%s",friend);
-    send_pack(flag, user, "server", friend);
+    printf("\t\t输入要屏蔽的好友名称：");
+    scanf("%s",friend_shi);
+    send_pack(flag, user, "server", friend_shi);
     pthread_cond_wait(&cond, &mutex);
     pthread_mutex_unlock(&mutex);
 }
@@ -698,7 +701,7 @@ void rel_fri()
 	int flag = REL_FRI;
     char friend[MAX_CHAR];
     pthread_mutex_lock(&mutex);
-    printf("\t\t你想要解除屏蔽的好友名称：");
+    printf("\t\t输入要解除屏蔽的好友名称：");
     scanf("%s",friend);
     send_pack(flag, user, "server", friend);
     pthread_cond_wait(&cond, &mutex);
@@ -715,7 +718,7 @@ void chat_one()
     memset(&rec_info, 0, sizeof(rec_info));
     rec_info[0].message[0] = '0';
     pthread_mutex_lock(&mutex);
-    printf("\n\t\t你想要聊天好友的名称：");
+    printf("\n\t\t输入要聊天好友名称：");
     scanf("%s",chat_name);
     mes[0] = '1';
     send_pack(flag, user, chat_name, mes);
@@ -734,7 +737,7 @@ void chat_one()
     {
         while(rec_info[i].message[0] != '0')
         {
-            printf("\t\t\e[1;35m%s = = = >%s: \e[0m%s\n",rec_info[i].name1, rec_info[i].name2, rec_info[i].message);
+            printf("\t\t\e[1;35m%s = = >%s: \e[0m%s\n",rec_info[i].name1, rec_info[i].name2, rec_info[i].message);
             i++;
         }
     }
@@ -760,7 +763,7 @@ void check_mes_fri()
     memset(&rec_info, 0, sizeof(rec_info));
     rec_info[0].message[0] = '0';
     pthread_mutex_lock(&mutex);
-    printf("\n\t\t输入想要查看聊天记录的好友昵称： ");
+    printf("\n\t\t输入想要查看聊天记录的好友昵称：");
     scanf("%s",mes_fri);
     send_pack(flag, user, "server", mes_fri);
     pthread_cond_wait(&cond, &mutex);
@@ -886,7 +889,7 @@ void check_mem_grp()
     int i;
 
     pthread_mutex_lock(&mutex);
-    printf("\n\t\t你想要查看那个群中的成员信息：");
+    printf("\n\t\t输入要查看群成员的群名称：");
     scanf("%s",mes);
     for(i = 0; i < grp_info.grp_num; i++)
     {
@@ -1054,7 +1057,7 @@ void chat_many()
     {
         while(rec_info[i].message[0] != '0')
         {
-            printf("\t\t\e[1;35m%s = = = >%s: \e[0m%s\n",rec_info[i].name1, rec_info[i].name2, rec_info[i].message);
+            printf("\t\t\e[1;35m%s = = >%s: \e[0m%s\n",rec_info[i].name1, rec_info[i].name2, rec_info[i].message);
             i++;
         }
     }
@@ -1223,3 +1226,5 @@ char *s_gets(char *s, int n)
     }
     return ss;
 }
+
+
