@@ -22,7 +22,7 @@
 #define EXIT           -1
 #define REGISTE         1
 #define LOGIN           2
-#define LOOK_FRI       3
+#define LOOK_FRI        3
 #define GET_FRI_STA     4
 #define ADD_FRI         5
 #define DEL_FRI         6
@@ -122,7 +122,7 @@ typedef struct _pack
     FIle file;
     FRI_INFO fri_info;
     GROUP_INFO grp_info;
-    RECORD_INFO rec_info[55];
+    RECORD_INFO rec_info[50];
 }PACK;
 
 void my_err(const char *err_string,int line)
@@ -168,21 +168,15 @@ void send_pack(int type, char *send_name, char *recv_name, char *mes);
 int get_choice(char *choice_t);
 char *s_gets(char *s, int n);
 
-
-
-
 pthread_mutex_t mutex;
 pthread_cond_t cond;
-
-
-
 
 int sock_fd;
 char user[MAX_CHAR];   
 char grp_name[MAX_CHAR];
 FRI_INFO fri_info; 
 GROUP_INFO grp_info;  
-RECORD_INFO rec_info[55]; 
+RECORD_INFO rec_info[50]; 
 char mes_file[MAX_CHAR * 3];
 int ffflag;
 
@@ -193,4 +187,3 @@ int sign;
 int sign_ive[100];
 
 #endif
-
