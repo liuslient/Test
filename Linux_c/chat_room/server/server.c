@@ -150,102 +150,6 @@ int main()
     return 0;
 }
 
-User *U_read()
-{
-    MYSQL_RES *res = NULL;
-    MYSQL_ROW row;
-    char query_str[1000];
-    int rows;
-    int fields;
-
-    User *pEnd, *pNew;
-
-    sprintf(query_str, "select * from userinfo");
-    mysql_real_query(&mysql, query_str, strlen(query_str));
-    res = mysql_store_result(&mysql);
-    rows = mysql_num_rows(res);
-    fields = mysql_num_fields(res);
-
-    while(row = mysql_fetch_row(res))
-    {
-        pNew = (User *)malloc(sizeof(User));
-        strcpy(pNew->name, row[0]);
-        strcpy(pNew->passwd, row[1]);
-        pNew->statu_s = OFFLINE;
-        pNew->next = NULL;
-        if(pHead == NULL)
-            pHead = pNew;
-        else
-            pEnd->next = pNew;
-        pEnd = pNew;
-    }
-    return pHead;
-}
-
-Relation *R_read()
-{
-    MYSQL_RES *res = NULL;
-    MYSQL_ROW row;
-    char query_str[1000];
-    int rows;
-    int fields;
-
-    Relation *pEnd, *pNew;
-
-    sprintf(query_str, "select * from relationinfo");
-    mysql_real_query(&mysql, query_str, strlen(query_str));
-    res = mysql_store_result(&mysql);
-    rows = mysql_num_rows(res);
-    fields = mysql_num_fields(res);
-
-    while(row = mysql_fetch_row(res))
-    {
-        pNew = (Relation *)malloc(sizeof(Relation));
-        strcpy(pNew->name1, row[0]);
-        strcpy(pNew->name2, row[1]);
-        pNew->statu_s = row[2][0] - '0';
-        pNew->next = NULL;
-        if(pStart == NULL)
-            pStart = pNew;
-        else
-            pEnd->next = pNew;
-        pEnd = pNew;
-    }
-    return pStart;
-}
-
-Recordinfo *RC_read()
-{
-    MYSQL_RES *res = NULL;
-    MYSQL_ROW row;
-    char query_str[1000];
-    int rows;
-    int fields;
-
-    Recordinfo *pEnd, *pNew;
-
-    sprintf(query_str, "select * from recordinfo");
-    mysql_real_query(&mysql, query_str, strlen(query_str));
-    res = mysql_store_result(&mysql);
-    rows = mysql_num_rows(res);
-    fields = mysql_num_fields(res);
-
-    while(row = mysql_fetch_row(res))
-    {
-        pNew = (Recordinfo *)malloc(sizeof(Recordinfo));
-        strcpy(pNew->name1, row[0]);
-        strcpy(pNew->name2, row[1]);
-        strcpy(pNew->message, row[2]);
-        pNew->next = NULL;
-        if(pRec == NULL)
-            pRec = pNew;
-        else
-            pEnd->next = pNew;
-        pEnd = pNew;
-    }
-    return pRec;
-}
-
 void *Menu(void *recv_pack_t)
 {
     PACK *recv_pack = (PACK *)recv_pack_t;
@@ -372,19 +276,19 @@ void registe(PACK *recv_pack)
     int fd = recv_pack->data.send_fd;
 
     User *t = pHead;
-    int flag = 0;
+    int flag_1 = 0;
     User *pNew = (User *)malloc(sizeof(User));
     while(t)
     {
         if(strcmp(t->name, recv_pack->data.send_name) == 0)
         {
-            flag = 1;
+            flag_1 = 1;
             break;
         }
         t = t->next;
     }
 
-    if(flag == 0)
+    if(flag_1 == 0)
     {
         strcpy(pNew->name, recv_pack->data.send_name);
         strcpy(pNew->passwd, recv_pack->data.mes);
@@ -418,18 +322,18 @@ void login(PACK *recv_pack)
     int i;
 
     User *t = pHead;
-    int flag = 0;
+    int flag_1 = 0;
     while(t)
     {
         if(strcmp(t->name, recv_pack->data.send_name) == 0 && strcmp(t->passwd, recv_pack->data.mes) == 0)
         {
-            flag = 1;
+            flag_1 = 1;
             break;
         }
         t = t->next;
     }
 
-    if(flag == 0)
+    if(flag_1 == 0)
         ch[0] = '0';
     else
     {
@@ -448,12 +352,12 @@ void login(PACK *recv_pack)
     {
         if((ch[0] == '1') && strcmp(recv_pack->data.send_name, Mex_Box[i].data.recv_name) == 0 && (Mex_Box[i].type == CHAT_ONE))
         {
-            send_more(fd, CHAT_ONE, &Mex_Box[i], "1");
+            send_mes(fd, CHAT_ONE, &Mex_Box[i], "1");
             book++;
         }
         if((ch[0] == '1') && strcmp(recv_pack->data.send_name, Mex_Box[i].data.send_name) == 0 && (Mex_Box[i].type == CHAT_MANY))
         {
-            send_more(fd, CHAT_MANY, &Mex_Box[i], "2");
+            send_mes(fd, CHAT_MANY, &Mex_Box[i], "2");
             book++;
         }
         if((ch[0] == '1') && strcmp(recv_pack->data.send_name, Mex_Box[i].data.recv_name) == 0 && (Mex_Box[i].type == ADD_FRI))
@@ -468,7 +372,7 @@ void login(PACK *recv_pack)
         }
         if((ch[0] == '1') && strcmp(recv_pack->data.send_name, Mex_Box[i].data.mes) == 0)
         {
-            send_more(fd, Mex_Box[i].type, &Mex_Box[i], "6");
+            send_mes(fd, Mex_Box[i].type, &Mex_Box[i], "6");
             book++;
         }
         if((ch[0] == '1') && strcmp(recv_pack->data.send_name, Mex_Box[i].data.recv_name) == 0 && strcmp(Mex_Box[i].data.mes, "ok") == 0)
@@ -525,7 +429,7 @@ void check_fri(PACK *recv_pack)
         }
         recv_pack->fri_info.friends_num = i;
     }
-    send_more(fd, flag, recv_pack, "");
+    send_mes(fd, flag, recv_pack, "");
 }
 
 void get_fri_sta(PACK *recv_pack)
@@ -535,12 +439,12 @@ void get_fri_sta(PACK *recv_pack)
     int fd = recv_pack->data.send_fd;
 
     User *t = pHead;
-    int flag_2 = 0;
+    int flag_1 = 0;
     while(t)
     {
         if(strcmp(t->name, recv_pack->data.send_name) == 0)
         {
-            flag_2 = 1;
+            flag_1 = 1;
             break;
         }
         t = t->next;
@@ -552,12 +456,12 @@ void get_fri_sta(PACK *recv_pack)
         ch[0] = '1';
     ch[1] = '\0';
 
-    send_more(fd, flag, recv_pack, ch);
+    send_mes(fd, flag, recv_pack, ch);
 }
 
 void add_fri(PACK *recv_pack)
 {
-    char query_str[1700];
+    char query_str[1000];
 
     int flag = ADD_FRI;
     int fd = recv_pack->data.send_fd;
@@ -567,22 +471,22 @@ void add_fri(PACK *recv_pack)
     User *t = pHead;
     int flag_2 = 0;
     Relation *q = pStart;
-    int flag_3 = 0;
+    int flag_1 = 0;
     Relation *pNew = (Relation *)malloc(sizeof(Relation));
     while(q)
     {
         if((strcmp(q->name1, recv_pack->data.recv_name) == 0 && strcmp(q->name2, recv_pack->data.send_name) == 0) || (strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.recv_name) == 0))
         {
-            flag_3 = 1;
+            flag_1 = 1;
             break;
         }
         q = q->next;
     }
 
-    if(flag_3 == 1)
+    if(flag_1 == 1)
     {
         ch[0] = '4';
-        send_more(fd, flag, recv_pack, ch);
+        send_mes(fd, flag, recv_pack, ch);
         free(pNew);
         pNew = NULL;
         return;
@@ -602,7 +506,7 @@ void add_fri(PACK *recv_pack)
         if(flag_2 == 0)
         {
             ch[0] = '3';
-            send_more(fd, flag, recv_pack, ch);
+            send_mes(fd, flag, recv_pack, ch);
             free(pNew);
             pNew = NULL;
             return;
@@ -632,7 +536,7 @@ void add_fri(PACK *recv_pack)
                 strcpy(ss,recv_pack->data.recv_name);
                 strcpy(recv_pack->data.recv_name, recv_pack->data.send_name);
                 strcpy(recv_pack->data.send_name, ss);
-                send_more(fd, flag, recv_pack, ch);
+                send_mes(fd, flag, recv_pack, ch);
             }
             else if(t->statu_s == OFFLINE)
             {
@@ -660,18 +564,18 @@ void del_fri(PACK *recv_pack)
     int fd = recv_pack->data.send_fd;
 
     Relation *q = pStart;
-    int flag_3 = 0;
+    int flag_1 = 0;
     while(q)
     {
         if((strcmp(q->name1, recv_pack->data.mes) == 0 && strcmp(q->name2, recv_pack->data.send_name) == 0) || (strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.mes) == 0))
         {
-            flag_3 = 1;
+            flag_1 = 1;
             break;
         }
         q = q->next;
     }
 
-    if(flag_3 == 0)
+    if(flag_1 == 0)
         ch[0] = '0';
     else
     {
@@ -682,7 +586,7 @@ void del_fri(PACK *recv_pack)
         mysql_real_query(&mysql, query_str, strlen(query_str));
         ch[0] = '1';
     }
-    send_more(fd, flag, recv_pack, ch);
+    send_mes(fd, flag, recv_pack, ch);
 }
 
 void Delete_R(Relation *pNew)
@@ -717,18 +621,18 @@ void shi_fri(PACK *recv_pack)
     int fd = recv_pack->data.send_fd;
 
     Relation *q = pStart;
-    int flag_3 = 0;
+    int flag_1 = 0;
     while(q)
     {
         if((strcmp(q->name1, recv_pack->data.mes) == 0 && strcmp(q->name2, recv_pack->data.send_name) == 0) || (strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.mes) == 0))
         {
-            flag_3 = 1;
+            flag_1 = 1;
             break;
         }
         q = q->next;
     }
 
-    if(flag_3 == 0)
+    if(flag_1 == 0)
         ch[0] = '0';
     else
     {
@@ -738,7 +642,7 @@ void shi_fri(PACK *recv_pack)
         mysql_real_query(&mysql, query_str, strlen(query_str));
         ch[0] = '1';
     }
-    send_more(fd, flag, recv_pack, ch);
+    send_mes(fd, flag, recv_pack, ch);
 
 }
 
@@ -751,18 +655,18 @@ void rel_fri(PACK *recv_pack)
     int fd = recv_pack->data.send_fd;
 
     Relation *q = pStart;
-    int flag_3 = 0;
+    int flag_1 = 0;
     while(q)
     {
         if((strcmp(q->name1, recv_pack->data.mes) == 0 && strcmp(q->name2, recv_pack->data.send_name) == 0) || (strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.mes) == 0))
         {
-            flag_3 = 1;
+            flag_1 = 1;
             break;
         }
         q = q->next;
     }
 
-    if(flag_3 == 0)
+    if(flag_1 == 0)
         ch[0] = '0';
     else
     {
@@ -772,7 +676,7 @@ void rel_fri(PACK *recv_pack)
         mysql_real_query(&mysql, query_str, strlen(query_str));
         ch[0] = '1';
     }
-    send_more(fd, flag, recv_pack, ch);
+    send_mes(fd, flag, recv_pack, ch);
 
 }
 
@@ -797,7 +701,7 @@ void chat_one(PACK *recv_pack)
     Relation *q = pStart;
     Recordinfo *p = pRec;
     int flag_2 = 0;
-    int flag_2_2 = 0;
+    int flag_1 = 0;
 
     Recordinfo *pNew = (Recordinfo *)malloc(sizeof(Recordinfo));
 
@@ -822,7 +726,7 @@ void chat_one(PACK *recv_pack)
         if(((strcmp(q->name1,recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.recv_name) == 0) || (strcmp(q->name2,recv_pack->data.send_name) == 0 && strcmp(q->name1, recv_pack->data.recv_name) == 0)) && (q->statu_s == FRI_BLK))
         {
             ch[0] = '3';
-            send_more(fd, flag, recv_pack, ch);
+            send_mes(fd, flag, recv_pack, ch);
             free(pNew);
             pNew = NULL;
             return;
@@ -844,7 +748,7 @@ void chat_one(PACK *recv_pack)
     if(flag_2 == 0)
     {
         ch[0] = '0';
-        send_more(fd, flag, recv_pack, ch);
+        send_mes(fd, flag, recv_pack, ch);
         free(pNew);
         pNew = NULL;
         return;
@@ -877,7 +781,7 @@ void chat_one(PACK *recv_pack)
                     break;                          
             }
             recv_pack->rec_info[i].message[0] = '0';
-            send_more(fd, flag, recv_pack, "6");
+            send_mes(fd, flag, recv_pack, "6");
 
             memset(query_str, 0, strlen(query_str));
             sprintf(query_str, "delete from off_recordinfo where name1='%s' and name2='%s'", recv_pack->data.recv_name, recv_pack->data.send_name);
@@ -899,24 +803,24 @@ void chat_one(PACK *recv_pack)
             {
                 if(strcmp(t->name, recv_pack->data.recv_name) == 0 && (t->statu_s != OFFLINE))
                 {
-                    flag_2_2 = 1;
+                    flag_1 = 1;
                     break;
                 }
                 t = t->next;
             }
-            if(flag_2_2 == 1)
+            if(flag_1 == 1)
             {
                 ch[0] = '1';
                 fd = t->fd;
                 strcpy(ss,recv_pack->data.recv_name);
                 strcpy(recv_pack->data.recv_name, recv_pack->data.send_name);
                 strcpy(recv_pack->data.send_name, ss);
-                send_more(fd, flag, recv_pack, ch);
+                send_mes(fd, flag, recv_pack, ch);
             }
             else 
             {
                 ch[0] = '2';
-                send_more(fd, flag, recv_pack, ch);
+                send_mes(fd, flag, recv_pack, ch);
                 memcpy(&Mex_Box[sign++], recv_pack, sizeof(PACK));
             }
         }
@@ -944,7 +848,7 @@ void chat_one(PACK *recv_pack)
                     str = ctime(&now);
                     str[strlen(str) - 1] = '\0';
                     memcpy(recv_pack->data.send_name, str, strlen(str));
-                    send_more(fd, flag, recv_pack, recv_pack->data.mes);
+                    send_mes(fd, flag, recv_pack, recv_pack->data.mes);
                     return;
                 }
                 else if(strcmp(t->name, recv_pack->data.recv_name) == 0 && strcmp(t->chat, recv_pack->data.send_name) != 0)
@@ -979,17 +883,17 @@ void check_mes_fri(PACK *recv_pack)
     int fd = recv_pack->data.send_fd;
     Relation *q = pStart;
     Recordinfo *p = pRec;
-    int flag_2 = 0;
+    int flag_1 = 0;
     while(q)
     {
         if(((strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.mes) == 0) || (strcmp(q->name2, recv_pack->data.send_name) == 0 && strcmp(q->name1, recv_pack->data.mes) == 0)) && (q->statu_s == FRIEND)) 
         {
-            flag_2 = 1;
+            flag_1 = 1;
             break;
         }
         q = q->next;
     }
-    if(flag_2 == 0)
+    if(flag_1 == 0)
         ch[0] = '0';
     else
     {
@@ -1010,7 +914,7 @@ void check_mes_fri(PACK *recv_pack)
     }
     recv_pack->rec_info[i].message[0] = '0';
                             
-    send_more(fd, flag, recv_pack, ch);
+    send_mes(fd, flag, recv_pack, ch);
 }
 
 void cre_grp(PACK *recv_pack)
@@ -1022,19 +926,19 @@ void cre_grp(PACK *recv_pack)
     char ch[5];
 
     Relation *q = pStart;
-    int flag_3 = 0;
+    int flag_1 = 0;
     Relation *pNew = (Relation *)malloc(sizeof(Relation));
     while(q)
     {
         if(strcmp(q->name2, recv_pack->data.mes) == 0)
         {
-            flag_3 = 1;
+            flag_1 = 1;
             break;
         }
         q = q->next;
     }
 
-    if(flag_3 == 1)
+    if(flag_1 == 1)
     {
         ch[0] = '0';
     }
@@ -1050,7 +954,7 @@ void cre_grp(PACK *recv_pack)
         sprintf(query_str, "insert into relationinfo values('%s', '%s', %d)", recv_pack->data.send_name, recv_pack->data.mes, GRP_OWN);
         mysql_real_query(&mysql, query_str, strlen(query_str));
     }
-    send_more(fd, flag, recv_pack, ch);
+    send_mes(fd, flag, recv_pack, ch);
 }
 
 void add_grp(PACK *recv_pack)
@@ -1063,7 +967,7 @@ void add_grp(PACK *recv_pack)
 
     User *t = pHead;
     Relation *q = pStart;
-    int flag_3 = 0;
+    int flag_1 = 0;
     Relation *pNew = (Relation *)malloc(sizeof(Relation));
     if(strcmp(recv_pack->data.mes, "y") == 0)
     {   
@@ -1086,7 +990,7 @@ void add_grp(PACK *recv_pack)
         memset(query_str, 0, strlen(query_str));
         sprintf(query_str, "insert into relationinfo values('%s', '%s', %d)", recv_pack->data.recv_name, recv_pack->data.send_name, GRP);
         mysql_real_query(&mysql, query_str, strlen(query_str));
-        send_more(fd, flag, recv_pack, ch);
+        send_mes(fd, flag, recv_pack, ch);
         return;
     }
     else if(strcmp(recv_pack->data.mes, "n") == 0)
@@ -1101,25 +1005,25 @@ void add_grp(PACK *recv_pack)
             t = t->next;
         }
         ch[0] = '3';
-        send_more(fd, flag, recv_pack, ch);
+        send_mes(fd, flag, recv_pack, ch);
         return;
     }
     while(q)
     {
         if(strcmp(q->name2, recv_pack->data.mes) == 0 && (q->statu_s == GRP_OWN))
         {
-            flag_3 = 1;
+            flag_1 = 1;
             strcpy(recv_pack->data.recv_name, q->name1);
             break;
         }
         q = q->next;
     }
 
-    if(flag_3 == 0)
+    if(flag_1 == 0)
     {
         ch[0] = '0';
     }
-    else if(flag_3 == 1)
+    else if(flag_1 == 1)
     {
         t = pHead;
         while(t)
@@ -1139,7 +1043,7 @@ void add_grp(PACK *recv_pack)
             t = t->next;
         }
     }
-    send_more(fd, flag, recv_pack, ch);
+    send_mes(fd, flag, recv_pack, ch);
 }
 
 void out_grp(PACK *recv_pack)
@@ -1151,18 +1055,18 @@ void out_grp(PACK *recv_pack)
     int fd = recv_pack->data.send_fd;
 
     Relation *q = pStart;
-    int flag_3 = 0;
+    int flag_1 = 0;
     while(q)
     {
         if(strcmp(q->name2, recv_pack->data.mes) == 0)
         {
-            flag_3 = 1;
+            flag_1 = 1;
             break;
         }
         q = q->next;
     }
 
-    if(flag_3 == 0)
+    if(flag_1 == 0)
         ch[0] = '0';
     else
     {
@@ -1173,7 +1077,7 @@ void out_grp(PACK *recv_pack)
         sprintf(query_str, "delete from relationinfo where name1='%s' and name2='%s'", recv_pack->data.send_name, recv_pack->data.mes);
         mysql_real_query(&mysql, query_str, strlen(query_str));
     }
-    send_more(fd, flag, recv_pack, ch);
+    send_mes(fd, flag, recv_pack, ch);
 }
 
 void del_grp(PACK *recv_pack)
@@ -1185,13 +1089,13 @@ void del_grp(PACK *recv_pack)
     int fd = recv_pack->data.send_fd;
 
     Relation *q = pStart;
-    int flag_3 = 0;
-    int flag_3_3 = 0;
+    int flag_1 = 0;
+    int flag_2 = 0;
     while(q)
     {
         if(strcmp(q->name2, recv_pack->data.mes) == 0)
         {
-            flag_3_3 = 1;
+            flag_2 = 1;
             break;
         }
         q = q->next;
@@ -1202,15 +1106,15 @@ void del_grp(PACK *recv_pack)
     {
         if(strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.mes) == 0 && (q->statu_s == GRP_OWN))
         {
-            flag_3 = 1;
+            flag_1 = 1;
             break;
         }
         q = q->next;
     }
 
-    if(flag_3_3 == 0)
+    if(flag_2 == 0)
         ch[0] = '0';
-    else if(flag_3 == 1 && flag_3_3 == 1)
+    else if(flag_1 == 1 && flag_2 == 1)
     {
         ch[0] = '1';
         q = pStart;
@@ -1224,9 +1128,9 @@ void del_grp(PACK *recv_pack)
         sprintf(query_str, "delete from relationinfo where name2='%s'", recv_pack->data.mes);
         mysql_real_query(&mysql, query_str, strlen(query_str));
     }
-    else if(flag_3 == 0 && flag_3_3 == 1)
+    else if(flag_1 == 0 && flag_2 == 1)
         ch[0] = '2';
-    send_more(fd, flag, recv_pack, ch);
+    send_mes(fd, flag, recv_pack, ch);
 }
 
 void set_grp_adm(PACK *recv_pack)
@@ -1240,13 +1144,13 @@ void set_grp_adm(PACK *recv_pack)
     User *t = pHead;
     Relation *q = pStart;
     int flag_3 = 0;
-    int flag_3_3 = 0;
-    int flag_3_3_3 = 0;
+    int flag_2 = 0;
+    int flag_1 = 0;
     while(q)
     {
         if(strcmp(q->name2, recv_pack->data.recv_name) == 0)
         {
-            flag_3_3 = 1;
+            flag_2 = 1;
             break;
         }
         q = q->next;
@@ -1257,7 +1161,7 @@ void set_grp_adm(PACK *recv_pack)
     {
         if(strcmp(q->name2, recv_pack->data.recv_name) == 0 && strcmp(q->name1, recv_pack->data.mes) == 0)
         {
-            flag_3_3_3 = 1;
+            flag_1 = 1;
             break;
         }
         q = q->next;
@@ -1274,7 +1178,7 @@ void set_grp_adm(PACK *recv_pack)
         q = q->next;
     }
 
-    if(flag_3 == 1 && flag_3_3 == 1 && flag_3_3_3 == 1)
+    if(flag_3 == 1 && flag_2 == 1 && flag_1 == 1)
     {
         ch[0] = '1';
         q = pStart;
@@ -1292,7 +1196,7 @@ void set_grp_adm(PACK *recv_pack)
             if(strcmp(t->name, recv_pack->data.mes) == 0 && (t->statu_s != OFFLINE))
             {
                 fd2 = t->fd;
-                send_more(fd2, flag, recv_pack, "6");
+                send_mes(fd2, flag, recv_pack, "6");
             }
             else if(strcmp(t->name, recv_pack->data.mes) == 0 && (t->statu_s == OFFLINE))
             {
@@ -1304,13 +1208,13 @@ void set_grp_adm(PACK *recv_pack)
         sprintf(query_str, "update relationinfo set status=%d where name1='%s' and name2='%s'", GRP_ADM, recv_pack->data.mes, recv_pack->data.recv_name);
         mysql_real_query(&mysql, query_str, strlen(query_str));
     }
-    else if(flag_3 == 0 && flag_3_3 == 1 && flag_3_3_3 == 1)
+    else if(flag_3 == 0 && flag_2 == 1 && flag_1 == 1)
         ch[0] = '2';
-    else if(flag_3_3_3 == 0)
+    else if(flag_1 == 0)
         ch[0] = '3';
-    else if(flag_3_3 == 0)
+    else if(flag_2 == 0)
         ch[0] = '0';
-    send_more(fd, flag, recv_pack, ch);
+    send_mes(fd, flag, recv_pack, ch);
 }
 
 void kick_grp(PACK *recv_pack)
@@ -1324,14 +1228,14 @@ void kick_grp(PACK *recv_pack)
     User *t = pHead;
     Relation *q = pStart;
     int flag_3 = 0;
-    int flag_3_3 = 0;
-    int flag_3_3_3 = 0;
-    int flag_3_3_3_3 = 0;
+    int flag_1 = 0;
+    int flag_2 = 0;
+    int flag_4 = 0;
     while(q)
     {
         if(strcmp(q->name2, recv_pack->data.recv_name) == 0)
         {
-            flag_3_3 = 1;
+            flag_1 = 1;
             break;
         }
         q = q->next;
@@ -1342,7 +1246,7 @@ void kick_grp(PACK *recv_pack)
     {
         if(strcmp(q->name2, recv_pack->data.recv_name) == 0 && strcmp(q->name1, recv_pack->data.mes) == 0)
         {
-            flag_3_3_3 = 1;
+            flag_2 = 1;
             break;
         }
         q = q->next;
@@ -1364,13 +1268,13 @@ void kick_grp(PACK *recv_pack)
     {
         if(strcmp(q->name1, recv_pack->data.mes) == 0 && (q->statu_s == GRP))
         {
-            flag_3_3_3_3 = 1;
+            flag_4 = 1;
             break;
         }
         q = q->next;
     }
 
-    if(flag_3 == 1 && flag_3_3 == 1 && flag_3_3_3 == 1 && flag_3_3_3_3 == 1)
+    if(flag_3 == 1 && flag_1 == 1 && flag_2 == 1 && flag_4 == 1)
     {
         ch[0] = '1';
         Delete_R(q);
@@ -1379,7 +1283,7 @@ void kick_grp(PACK *recv_pack)
             if(strcmp(t->name, recv_pack->data.mes) == 0 && (t->statu_s != OFFLINE))
             {
                 fd2 = t->fd;
-                send_more(fd2, flag, recv_pack, "6");
+                send_mes(fd2, flag, recv_pack, "6");
             }
             else if(strcmp(t->name, recv_pack->data.mes) == 0 && (t->statu_s == OFFLINE))
             {
@@ -1391,15 +1295,15 @@ void kick_grp(PACK *recv_pack)
         sprintf(query_str, "delete from relationinfo where name1='%s' and name2='%s'", recv_pack->data.mes, recv_pack->data.recv_name);
         mysql_real_query(&mysql, query_str, strlen(query_str));
     }
-    else if(flag_3 == 0 && flag_3_3 == 1 && flag_3_3_3 == 1 && flag_3_3_3_3 == 1)
+    else if(flag_3 == 0 && flag_1 == 1 && flag_2 == 1 && flag_4 == 1)
         ch[0] = '2';
-    else if(flag_3_3_3_3 == 0)
+    else if(flag_4 == 0)
         ch[0] = '4';
-    else if(flag_3_3_3 == 0)
+    else if(flag_2 == 0)
         ch[0] = '3';
-    else if(flag_3_3 == 0)
+    else if(flag_1 == 0)
         ch[0] = '0';
-    send_more(fd, flag, recv_pack, ch);
+    send_mes(fd, flag, recv_pack, ch);
 }
 
 void check_grp(PACK *recv_pack)
@@ -1421,7 +1325,7 @@ void check_grp(PACK *recv_pack)
 
     recv_pack->grp_info.grp_num = i;
 
-    send_more(fd, flag, recv_pack, "");
+    send_mes(fd, flag, recv_pack, "");
 }
 
 void check_mem_grp(PACK *recv_pack)
@@ -1442,7 +1346,7 @@ void check_mem_grp(PACK *recv_pack)
     }
     recv_pack->fri_info.friends_num = i;
 
-    send_more(fd, flag, recv_pack, "");
+    send_mes(fd, flag, recv_pack, "");
 }
 
 void chat_many(PACK *recv_pack)
@@ -1466,7 +1370,7 @@ void chat_many(PACK *recv_pack)
 
     User *t = pHead;
     Relation *q = pStart;
-    int flag_2 = 0;
+    int flag_1 = 0;
 
     Recordinfo *pNew = (Recordinfo *)malloc(sizeof(Recordinfo));
 
@@ -1489,15 +1393,15 @@ void chat_many(PACK *recv_pack)
     {
         if(strcmp(q->name2, recv_pack->data.recv_name) == 0 && (q->statu_s >= GRP))
         {
-            flag_2 = 1;
+            flag_1 = 1;
             break;
         }
         q = q->next;
     }
-    if(flag_2 == 0)
+    if(flag_1 == 0)
     {
         ch[0] = '0';
-        send_more(fd, flag, recv_pack, ch);
+        send_mes(fd, flag, recv_pack, ch);
         free(pNew);
         pNew = NULL;
         return;
@@ -1540,7 +1444,7 @@ void chat_many(PACK *recv_pack)
             else
                 recv_pack->rec_info[j].message[0] = '0';
 
-            send_more(fd, flag, recv_pack, "6");
+            send_mes(fd, flag, recv_pack, "6");
             free(pNew);
             pNew = NULL;
 
@@ -1567,7 +1471,7 @@ void chat_many(PACK *recv_pack)
                         {
                             ch[0] = '1';
                             fd = t->fd;
-                            send_more(fd, flag, recv_pack, ch);
+                            send_mes(fd, flag, recv_pack, ch);
                             break;
                         }
                         else if(strcmp(q->name1, t->name) == 0 && (t->statu_s == OFFLINE))
@@ -1611,7 +1515,7 @@ void chat_many(PACK *recv_pack)
                             str = ctime(&now);
                             str[strlen(str) - 1] = '\0';
                             memcpy(recv_pack->data.send_name, str, strlen(str));
-                            send_more(fd, flag, recv_pack, recv_pack->data.mes);
+                            send_mes(fd, flag, recv_pack, recv_pack->data.mes);
                             strcpy(recv_pack->data.send_name, ss);
                             bzero(ss, MAX_CHAR);
                             strcpy(ss,recv_pack->data.recv_name);
@@ -1636,17 +1540,17 @@ void check_mes_grp(PACK *recv_pack)
     int fd = recv_pack->data.send_fd;
     Relation *q = pStart;
     Recordinfo *p = pRec;
-    int flag_2 = 0;
+    int flag_1 = 0;
     while(q)
     {
         if(strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.mes) == 0 && (q->statu_s >= GRP)) 
         {
-            flag_2 = 1;
+            flag_1 = 1;
             break;
         }
         q = q->next;
     }
-    if(flag_2 == 0)
+    if(flag_1 == 0)
         ch[0] = '0';
     else
     {
@@ -1667,7 +1571,7 @@ void check_mes_grp(PACK *recv_pack)
     }
     recv_pack->rec_info[i].message[0] = '0';
     
-    send_more(fd, flag, recv_pack, ch);
+    send_mes(fd, flag, recv_pack, ch);
 }
 
 void recv_file(PACK *recv_pack)
@@ -1681,19 +1585,19 @@ void recv_file(PACK *recv_pack)
     bzero(mes, MAX_CHAR * 3 + 1);
     int fp;
     User *t = pHead;
-    int flag_2 = 0;
+    int flag_1 = 0;
     if(strcmp(recv_pack->data.mes,"8888") == 0)
     {
         while(t)
         {
             if(strcmp(t->name, recv_pack->data.recv_name) == 0)
             {
-                flag_2 = 1;
+                flag_1 = 1;
                 break;
             }
             t = t->next;
         }
-        if(flag_2 == 1)
+        if(flag_1 == 1)
         {
             file.file_name[file.sign_file][0] = '_';
             for(i = 0; i < strlen(recv_pack->data.send_name); i++)
@@ -1713,10 +1617,10 @@ void recv_file(PACK *recv_pack)
             fp = creat(file.file_name[file.sign_file], S_IRWXU);
             file.sign_file++;
             close(fp);
-            send_more(fd, flag, recv_pack, "1");
+            send_mes(fd, flag, recv_pack, "1");
         }
         else 
-            send_more(fd, flag, recv_pack, "0");
+            send_mes(fd, flag, recv_pack, "0");
     }
     else if(strcmp(recv_pack->data.mes, "ok") == 0)
     {
@@ -1724,14 +1628,14 @@ void recv_file(PACK *recv_pack)
         {
             if(strcmp(t->name, recv_pack->data.recv_name) == 0 && (t->statu_s != OFFLINE))
             {
-                flag_2 = 1;
+                flag_1 = 1;
                 break;
             }
             t = t->next;
         }
-        if(flag_2 == 1)
+        if(flag_1 == 1)
             send_file(recv_pack);
-        else if(flag_2 == 0)
+        else if(flag_1 == 0)
             memcpy(&Mex_Box[sign++], recv_pack, sizeof(PACK));    
     }
     else
@@ -1780,16 +1684,16 @@ void send_file(PACK *recv_pack)
         strcpy(ss,recv_pack->data.recv_name);
         strcpy(recv_pack->data.recv_name, recv_pack->data.send_name);
         strcpy(recv_pack->data.send_name, ss);
-        send_more(fd2, flag, recv_pack, "request");
+        send_mes(fd2, flag, recv_pack, "request");
     }
     else if(recv_pack->data.mes[0] == 'y')
     {
         for(i = 0; i < file.sign_file; i++)
             if(strcmp(file.file_send_name[i], recv_pack->data.send_name) == 0)
                 break;
-        send_more(fd2, flag, recv_pack, "consent");
+        send_mes(fd2, flag, recv_pack, "consent");
         strcpy(recv_pack->data.recv_name, file.file_name[i]);
-        send_more(fd, flag, recv_pack, "8888");
+        send_mes(fd, flag, recv_pack, "8888");
 
         strcpy(send_file.data.send_name, recv_pack->data.recv_name);
         strcpy(send_file.data.recv_name, recv_pack->data.send_name);
@@ -1804,15 +1708,15 @@ void send_file(PACK *recv_pack)
             bzero(send_file.file.mes, MAX_FILE);
         }
         printf("发送成功!\n");
-        send_more(fd, flag, recv_pack, "end");
-        send_more(fd2, flag, recv_pack, "finish");
+        send_mes(fd, flag, recv_pack, "end");
+        send_mes(fd2, flag, recv_pack, "finish");
         remove(file.file_name[i]);
         file.file_send_name[i][0] = '\0';
         close(fp);
     }
     else if(recv_pack->data.mes[0] == 'n')
     {
-        send_more(fd2, flag, recv_pack, "no");
+        send_mes(fd2, flag, recv_pack, "no");
         for(i = 0; i < file.sign_file; i++)
             if(strcmp(file.file_send_name[i], recv_pack->data.send_name) == 0)
                 break;
@@ -1822,7 +1726,7 @@ void send_file(PACK *recv_pack)
     pthread_mutex_unlock(&mutex);
 }
 
-void send_more(int fd, int type, PACK *recv_pack, char *mes)
+void send_mes(int fd, int type, PACK *recv_pack, char *mes)
 {
     PACK pack_send;
     char ss[MAX_CHAR];
@@ -1852,6 +1756,103 @@ void send_pack(int fd, PACK *recv_pack, char *ch)
     if(send(fd, &pack_send, sizeof(PACK), 0) < 0)
         my_err("send", __LINE__);
 }
+
+User *U_read()
+{
+    MYSQL_RES *res = NULL;
+    MYSQL_ROW row;
+    char query_str[1000];
+    int rows;
+    int fields;
+
+    User *pEnd, *pNew;
+
+    sprintf(query_str, "select * from userinfo");
+    mysql_real_query(&mysql, query_str, strlen(query_str));
+    res = mysql_store_result(&mysql);
+    rows = mysql_num_rows(res);
+    fields = mysql_num_fields(res);
+
+    while(row = mysql_fetch_row(res))
+    {
+        pNew = (User *)malloc(sizeof(User));
+        strcpy(pNew->name, row[0]);
+        strcpy(pNew->passwd, row[1]);
+        pNew->statu_s = OFFLINE;
+        pNew->next = NULL;
+        if(pHead == NULL)
+            pHead = pNew;
+        else
+            pEnd->next = pNew;
+        pEnd = pNew;
+    }
+    return pHead;
+}
+
+Relation *R_read()
+{
+    MYSQL_RES *res = NULL;
+    MYSQL_ROW row;
+    char query_str[1000];
+    int rows;
+    int fields;
+
+    Relation *pEnd, *pNew;
+
+    sprintf(query_str, "select * from relationinfo");
+    mysql_real_query(&mysql, query_str, strlen(query_str));
+    res = mysql_store_result(&mysql);
+    rows = mysql_num_rows(res);
+    fields = mysql_num_fields(res);
+
+    while(row = mysql_fetch_row(res))
+    {
+        pNew = (Relation *)malloc(sizeof(Relation));
+        strcpy(pNew->name1, row[0]);
+        strcpy(pNew->name2, row[1]);
+        pNew->statu_s = row[2][0] - '0';
+        pNew->next = NULL;
+        if(pStart == NULL)
+            pStart = pNew;
+        else
+            pEnd->next = pNew;
+        pEnd = pNew;
+    }
+    return pStart;
+}
+
+Recordinfo *RC_read()
+{
+    MYSQL_RES *res = NULL;
+    MYSQL_ROW row;
+    char query_str[1000];
+    int rows;
+    int fields;
+
+    Recordinfo *pEnd, *pNew;
+
+    sprintf(query_str, "select * from recordinfo");
+    mysql_real_query(&mysql, query_str, strlen(query_str));
+    res = mysql_store_result(&mysql);
+    rows = mysql_num_rows(res);
+    fields = mysql_num_fields(res);
+
+    while(row = mysql_fetch_row(res))
+    {
+        pNew = (Recordinfo *)malloc(sizeof(Recordinfo));
+        strcpy(pNew->name1, row[0]);
+        strcpy(pNew->name2, row[1]);
+        strcpy(pNew->message, row[2]);
+        pNew->next = NULL;
+        if(pRec == NULL)
+            pRec = pNew;
+        else
+            pEnd->next = pNew;
+        pEnd = pNew;
+    }
+    return pRec;
+}
+
 
 void DeleteLink()		
 {

@@ -194,7 +194,7 @@ void chat_many(PACK *recv_pack);
 void check_mes_grp(PACK *recv_pack);
 void send_file(PACK *recv_pack); 
 void recv_file(PACK *recv_pack);
-void send_more(int fd, int flag, PACK *recv_pack, char *mes);
+void send_mes(int fd, int flag, PACK *recv_pack, char *mes);
 void send_pack(int fd, PACK *recv_pack, char *ch);
 
 #endif
