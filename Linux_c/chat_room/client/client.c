@@ -3,7 +3,7 @@
 int main(int argc, char *argv[])
 {
     struct sockaddr_in serv_addr;
-    pthread_t thid;
+    pthread_t pid;
 
     memset(&serv_addr,0,sizeof(struct sockaddr_in));
     serv_addr.sin_family = AF_INET;
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    pthread_create(&thid, NULL, get_back, NULL);
+    pthread_create(&pid, NULL, recv_back, NULL);
     
     Menu();
 
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void *get_back(void *arg)
+void *recv_back(void *arg)
 {
     pthread_mutex_t mutex_g;
     pthread_mutex_init(&mutex_g, NULL);
