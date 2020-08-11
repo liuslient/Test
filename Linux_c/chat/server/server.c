@@ -27,7 +27,7 @@ int main()
         return -1;
     }
 
-    if (mysql_real_connect(&mysql,"127.0.0.1","root","new_password","try",0,NULL,0) == NULL) 
+    if (mysql_real_connect(&mysql,"127.0.0.1","root","new_password","chat",0,NULL,0) == NULL) 
     {
         printf("mysql_real_connect(): %s\n", mysql_error(&mysql));
         return -1;
@@ -160,7 +160,7 @@ User *U_read()
 
     User *pEnd, *pNew;
 
-    sprintf(query_str, "select * from userinfo");
+    sprintf(query_str, "select * from user");
     mysql_real_query(&mysql, query_str, strlen(query_str));
     res = mysql_store_result(&mysql);
     rows = mysql_num_rows(res);
@@ -192,7 +192,7 @@ Relation *R_read()
 
     Relation *pEnd, *pNew;
 
-    sprintf(query_str, "select * from relationinfo");
+    sprintf(query_str, "select * from relation");
     mysql_real_query(&mysql, query_str, strlen(query_str));
     res = mysql_store_result(&mysql);
     rows = mysql_num_rows(res);
@@ -224,7 +224,7 @@ Recordinfo *RC_read()
 
     Recordinfo *pEnd, *pNew;
 
-    sprintf(query_str, "select * from recordinfo");
+    sprintf(query_str, "select * from message");
     mysql_real_query(&mysql, query_str, strlen(query_str));
     res = mysql_store_result(&mysql);
     rows = mysql_num_rows(res);
@@ -389,7 +389,7 @@ void registe(PACK *recv_pack)
         Insert(pNew);
 
         memset(query_str, 0, strlen(query_str));
-        sprintf(query_str, "insert into userinfo values('%s', '%s')", recv_pack->data.send_name, recv_pack->data.mes);
+        sprintf(query_str, "insert into user values('%s', '%s')", recv_pack->data.send_name, recv_pack->data.mes);
         mysql_real_query(&mysql, query_str, strlen(query_str));
         ch[0] = '1';
     }
@@ -492,7 +492,7 @@ void look_fri(PACK *recv_pack)
     int statu_s;
 
     memset(query_str, 0, strlen(query_str));
-    sprintf(query_str, "select * from relationinfo where name1='%s' or name2='%s'", recv_pack->data.send_name, recv_pack->data.send_name);
+    sprintf(query_str, "select * from relation where user='%s' or oth_user='%s'", recv_pack->data.send_name, recv_pack->data.send_name);
     mysql_real_query(&mysql, query_str, strlen(query_str));
     
     res = mysql_store_result(&mysql);
@@ -621,7 +621,7 @@ void add_fri(PACK *recv_pack)
                     Insert_R(pNew);
 
                     memset(query_str, 0, strlen(query_str));
-                    sprintf(query_str, "insert into relationinfo values('%s', '%s', %d)", recv_pack->data.recv_name, recv_pack->data.send_name, FRIEND);
+                    sprintf(query_str, "insert into relation values('%s', '%s', %d)", recv_pack->data.recv_name, recv_pack->data.send_name, FRIEND);
                     mysql_real_query(&mysql, query_str, strlen(query_str));
                 }
                 else if(recv_pack->data.mes[0] == 'n')
@@ -676,7 +676,7 @@ void del_fri(PACK *recv_pack)
         Delete_R(q);
 
         memset(query_str, 0, strlen(query_str));
-        sprintf(query_str, "delete from relationinfo where (name1='%s' and name2='%s') or (name1='%s' and name2='%s')", recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
+        sprintf(query_str, "delete from relation where (user='%s' and oth_user='%s') or (user='%s' and oth_user='%s')", recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
         mysql_real_query(&mysql, query_str, strlen(query_str));
         ch[0] = '1';
     }
@@ -732,7 +732,7 @@ void shi_fri(PACK *recv_pack)
     {
         q->statu_s = FRI_BLK;
         memset(query_str, 0, strlen(query_str));
-        sprintf(query_str, "update relationinfo set status=%d where (name1='%s' and name2='%s') or (name1='%s' and name2='%s')", FRI_BLK, recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
+        sprintf(query_str, "update relation set status=%d where (user='%s' and oth_user='%s') or (user='%s' and oth_user='%s')", FRI_BLK, recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
         mysql_real_query(&mysql, query_str, strlen(query_str));
         ch[0] = '1';
     }
@@ -766,7 +766,7 @@ void rel_fri(PACK *recv_pack)
     {
         q->statu_s = FRI_BLK;
         memset(query_str, 0, strlen(query_str));
-        sprintf(query_str, "update relationinfo set status=%d where (name1='%s' and name2='%s') or (name1='%s' and name2='%s')", FRIEND, recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
+        sprintf(query_str, "update relation set status=%d where (user='%s' and oth_user='%s') or (user='%s' and oth_user='%s')", FRIEND, recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
         mysql_real_query(&mysql, query_str, strlen(query_str));
         ch[0] = '1';
     }
@@ -852,7 +852,7 @@ void chat_one(PACK *recv_pack)
         if(recv_pack->data.mes[0] == '1')
         {
             memset(query_str, 0, strlen(query_str));
-            sprintf(query_str, "select * from off_recordinfo where name1='%s' and name2='%s'", recv_pack->data.recv_name, recv_pack->data.send_name);
+            sprintf(query_str, "select * from off_message where user='%s' and oth_user='%s'", recv_pack->data.recv_name, recv_pack->data.send_name);
             mysql_real_query(&mysql, query_str, strlen(query_str));
             res = mysql_store_result(&mysql);
             rows = mysql_num_rows(res);
@@ -864,7 +864,7 @@ void chat_one(PACK *recv_pack)
                 strcpy(pNew->message, row[2]);
                 Insert_RC(pNew);
                 memset(query_str, 0, strlen(query_str));
-                sprintf(query_str, "insert into recordinfo values('%s', '%s', '%s')", row[0], row[1], row[2]);
+                sprintf(query_str, "insert into message values('%s', '%s', '%s')", row[0], row[1], row[2]);
                 mysql_real_query(&mysql, query_str, strlen(query_str));
                 
                 strcpy(recv_pack->rec_info[i].name1, row[0]);
@@ -878,7 +878,7 @@ void chat_one(PACK *recv_pack)
             send_mes(fd, flag, recv_pack, "6");
 
             memset(query_str, 0, strlen(query_str));
-            sprintf(query_str, "delete from off_recordinfo where name1='%s' and name2='%s'", recv_pack->data.recv_name, recv_pack->data.send_name);
+            sprintf(query_str, "delete from off_message where user='%s' and oth_user='%s'", recv_pack->data.recv_name, recv_pack->data.send_name);
             mysql_real_query(&mysql, query_str, strlen(query_str));
             
             t = pHead;
@@ -932,7 +932,7 @@ void chat_one(PACK *recv_pack)
                     Insert_RC(pNew);
 
                     memset(query_str, 0, strlen(query_str));
-                    sprintf(query_str, "insert into recordinfo values('%s', '%s', '%s')", recv_pack->data.send_name, recv_pack->data.recv_name, recv_pack->data.mes);
+                    sprintf(query_str, "insert into message values('%s', '%s', '%s')", recv_pack->data.send_name, recv_pack->data.recv_name, recv_pack->data.mes);
                     mysql_real_query(&mysql, query_str, strlen(query_str));
                     
                     memset(ss, 0, MAX_CHAR);
@@ -948,7 +948,7 @@ void chat_one(PACK *recv_pack)
                 else if(strcmp(t->name, recv_pack->data.recv_name) == 0 && strcmp(t->chat, recv_pack->data.send_name) != 0)
                 {
                     memset(query_str, 0, strlen(query_str));
-                    sprintf(query_str, "insert into off_recordinfo values('%s', '%s', '%s')", recv_pack->data.send_name, recv_pack->data.recv_name, recv_pack->data.mes);
+                    sprintf(query_str, "insert into off_message values('%s', '%s', '%s')", recv_pack->data.send_name, recv_pack->data.recv_name, recv_pack->data.mes);
                     mysql_real_query(&mysql, query_str, strlen(query_str));
                     free(pNew);
                     pNew = NULL;
@@ -1045,7 +1045,7 @@ void cre_grp(PACK *recv_pack)
         Insert_R(pNew);
         
         memset(query_str, 0, strlen(query_str));
-        sprintf(query_str, "insert into relationinfo values('%s', '%s', %d)", recv_pack->data.send_name, recv_pack->data.mes, GRP_OWN);
+        sprintf(query_str, "insert into relation values('%s', '%s', %d)", recv_pack->data.send_name, recv_pack->data.mes, GRP_OWN);
         mysql_real_query(&mysql, query_str, strlen(query_str));
     }
     send_mes(fd, flag, recv_pack, ch);
@@ -1082,7 +1082,7 @@ void add_grp(PACK *recv_pack)
         Insert_R(pNew);
 
         memset(query_str, 0, strlen(query_str));
-        sprintf(query_str, "insert into relationinfo values('%s', '%s', %d)", recv_pack->data.recv_name, recv_pack->data.send_name, GRP);
+        sprintf(query_str, "insert into relation values('%s', '%s', %d)", recv_pack->data.recv_name, recv_pack->data.send_name, GRP);
         mysql_real_query(&mysql, query_str, strlen(query_str));
         send_mes(fd, flag, recv_pack, ch);
         return;
@@ -1168,7 +1168,7 @@ void out_grp(PACK *recv_pack)
         Delete_R(q);
 
         memset(query_str, 0, strlen(query_str));
-        sprintf(query_str, "delete from relationinfo where name1='%s' and name2='%s'", recv_pack->data.send_name, recv_pack->data.mes);
+        sprintf(query_str, "delete from relation where user='%s' and oth_user='%s'", recv_pack->data.send_name, recv_pack->data.mes);
         mysql_real_query(&mysql, query_str, strlen(query_str));
     }
     send_mes(fd, flag, recv_pack, ch);
@@ -1219,7 +1219,7 @@ void del_grp(PACK *recv_pack)
             q = q->next;
         }
         memset(query_str, 0, strlen(query_str));
-        sprintf(query_str, "delete from relationinfo where name2='%s'", recv_pack->data.mes);
+        sprintf(query_str, "delete from relation where oth_user='%s'", recv_pack->data.mes);
         mysql_real_query(&mysql, query_str, strlen(query_str));
     }
     else if(flag_3 == 0 && flag_3_3 == 1)
@@ -1299,7 +1299,7 @@ void set_grp_adm(PACK *recv_pack)
             t = t->next;
         }
         memset(query_str, 0, strlen(query_str));
-        sprintf(query_str, "update relationinfo set status=%d where name1='%s' and name2='%s'", GRP_ADM, recv_pack->data.mes, recv_pack->data.recv_name);
+        sprintf(query_str, "update relation set status=%d where user='%s' and oth_user='%s'", GRP_ADM, recv_pack->data.mes, recv_pack->data.recv_name);
         mysql_real_query(&mysql, query_str, strlen(query_str));
     }
     else if(flag_3 == 0 && flag_3_3 == 1 && flag_3_3_3 == 1)
@@ -1386,7 +1386,7 @@ void kick_grp(PACK *recv_pack)
             t = t->next;
         }
         memset(query_str, 0, strlen(query_str));
-        sprintf(query_str, "delete from relationinfo where name1='%s' and name2='%s'", recv_pack->data.mes, recv_pack->data.recv_name);
+        sprintf(query_str, "delete from relation where user='%s' and oth_user='%s'", recv_pack->data.mes, recv_pack->data.recv_name);
         mysql_real_query(&mysql, query_str, strlen(query_str));
     }
     else if(flag_3 == 0 && flag_3_3 == 1 && flag_3_3_3 == 1 && flag_3_3_3_3 == 1)
@@ -1505,7 +1505,7 @@ void chat_many(PACK *recv_pack)
         if(strcmp(recv_pack->data.mes, "1") == 0)
         {
             memset(query_str, 0, strlen(query_str));
-            sprintf(query_str, "select * from recordinfo where name2='%s'", recv_pack->data.recv_name);
+            sprintf(query_str, "select * from message where oth_user='%s'", recv_pack->data.recv_name);
             mysql_real_query(&mysql, query_str, strlen(query_str));
             res = mysql_store_result(&mysql);
             rows = mysql_num_rows(res);
@@ -1588,7 +1588,7 @@ void chat_many(PACK *recv_pack)
             strcpy(pNew->message, recv_pack->data.mes);
             Insert_RC(pNew);
             memset(query_str, 0, strlen(query_str));
-            sprintf(query_str, "insert into recordinfo values('%s', '%s', '%s')", recv_pack->data.send_name, recv_pack->data.recv_name, recv_pack->data.mes);
+            sprintf(query_str, "insert into message values('%s', '%s', '%s')", recv_pack->data.send_name, recv_pack->data.recv_name, recv_pack->data.mes);
             mysql_real_query(&mysql, query_str, strlen(query_str));
 
             q = pStart;
