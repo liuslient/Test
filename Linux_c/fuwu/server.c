@@ -14,7 +14,7 @@
 #include<mysql.h>
 #include<sys/epoll.h>
 #include"chat.h"
-#include"thread_pool.h"
+#include"pool.h"
 
 #define SERV_PORT 9527  //服务器端口号
 #define LISTENQ 10      //连接请求队列的最大长度

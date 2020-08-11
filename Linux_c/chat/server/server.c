@@ -3,20 +3,22 @@
 
 int main()
 {
-    int i=0;
+    int sock_fd,conn_fd;
     int optval;
-    char need[1000];
-	int sock_fd,conn_fd;
-	socklen_t len;
+    socklen_t len;
     struct sockaddr_in cli_addr,serv_addr;
     
     PACK recv_t;
-    PACK *recv_pack; 
+    PACK *recv_pack;
     int ret;
 
-    int epfd,nfds;   
-    struct epoll_event ev, events[MAX_EVENTS];  
+    int epfd;   //epoll的文件描述符
+    struct epoll_event ev, events[MAX_EVENTS];  //存放从内核读取的事件
+    int ret_event;  //epoll_wait()的返回值
+
+    int i = 0;
     len = sizeof(struct sockaddr_in);
+
 
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&cond, NULL);
@@ -27,13 +29,11 @@ int main()
         return -1;
     }
 
-    if (mysql_real_connect(&mysql,"127.0.0.1","root","new_password","chat",0,NULL,0) == NULL) 
+    if (mysql_real_connect(&mysql,NULL,"root","new_password","try",0,NULL,0) == NULL) 
     {
         printf("mysql_real_connect(): %s\n", mysql_error(&mysql));
         return -1;
     }
-    
-    mysql_set_character_set(&mysql,"utf8");
 
     printf("服务器启动中...\n");
 
@@ -59,17 +59,16 @@ int main()
         my_err("listen",__LINE__);
     printf("侦听套接字...\n");
 
-    epfd = epoll_create(MAX_EVENTS);   
-    ev.data.fd = sock_fd;             
-    ev.events = EPOLLIN;     
-    epoll_ctl(epfd, EPOLL_CTL_ADD, sock_fd, &ev);
+    epfd = epoll_create(MAX_EVENTS);    //创建句柄
+    ev.data.fd = sock_fd;               //设置与要处理事件相关的文件描述符
+    ev.events = EPOLLIN;                //设置要处理的事件类型
+    epoll_ctl(epfd, EPOLL_CTL_ADD, sock_fd, &ev);//注册epoll事件 
     
     printf("创建线程池...\n");
     pool_init();
     sleep(1);
 
     printf("服务器启动成功！\n");
-    printf("等待客户端的接入中...\n");
 
     pHead = U_read();
     User *t = pHead;
@@ -78,22 +77,23 @@ int main()
 
     while(1)
     {
-        nfds = epoll_wait(epfd, events, MAX_EVENTS, 1000);    
+        ret_event = epoll_wait(epfd, events, MAX_EVENTS, 1000);    //等待事件到来
 
-        for(i = 0; i < nfds; i++)
+        for(i = 0; i < ret_event; i++)
         {
             if(events[i].data.fd == sock_fd)
             {
                 conn_fd = accept(sock_fd, (struct sockaddr *)&cli_addr, &len);
                 printf("Connected: %s, fd is %d\n",inet_ntoa(cli_addr.sin_addr), conn_fd);
-                ev.data.fd = conn_fd;               
-                ev.events = EPOLLIN;                
-                epoll_ctl(epfd, EPOLL_CTL_ADD, conn_fd, &ev);   
+                ev.data.fd = conn_fd;               //设置与要处理事件相关的文件描述符
+                ev.events = EPOLLIN;                //设置要处理的事件类型
+                epoll_ctl(epfd, EPOLL_CTL_ADD, conn_fd, &ev);   //注册epoll事件
                 continue;
             }
             else if(events[i].events & EPOLLIN)
             {
                 ret = recv(events[i].data.fd, &recv_t, sizeof(PACK), MSG_WAITALL);
+                printf("ret = %d\n", ret);
                 recv_t.data.send_fd = events[i].data.fd;
 
                 if(ret < 0)
@@ -114,7 +114,7 @@ int main()
                         }
                         t = t->next;
                     }
-                    printf("fd: %d 的客户端退出\n",ev.data.fd);
+                    printf("log off(fd): %d\n",ev.data.fd);
                     epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, &ev);
                     close(events[i].data.fd);
                     continue;
@@ -132,6 +132,8 @@ int main()
                 recv_pack = (PACK *)malloc(sizeof(PACK));
                 memcpy(recv_pack, &recv_t, sizeof(PACK));
                 
+                if(recv_pack->type == RECV_FILE)
+                    recv_file(recv_pack);
 
                 pool_add(deal, (void *)recv_pack);        
                 
@@ -160,7 +162,7 @@ User *U_read()
 
     User *pEnd, *pNew;
 
-    sprintf(need, "select * from user");
+    sprintf(need, "select * from userinfo");
     mysql_real_query(&mysql, need, strlen(need));
     res = mysql_store_result(&mysql);
     rows = mysql_num_rows(res);
@@ -192,7 +194,8 @@ Relation *R_read()
 
     Relation *pEnd, *pNew;
 
-    sprintf(need, "select * from relation");
+
+    sprintf(need, "select * from relationinfo");
     mysql_real_query(&mysql, need, strlen(need));
     res = mysql_store_result(&mysql);
     rows = mysql_num_rows(res);
@@ -216,7 +219,7 @@ Relation *R_read()
 
 Recordinfo *RC_read()
 {
-    MYSQL_RES *res = NULL;
+   MYSQL_RES *res = NULL;
     MYSQL_ROW row;
     char need[1000];
     int rows;
@@ -224,7 +227,7 @@ Recordinfo *RC_read()
 
     Recordinfo *pEnd, *pNew;
 
-    sprintf(need, "select * from message");
+    sprintf(need, "select * from recordinfo");
     mysql_real_query(&mysql, need, strlen(need));
     res = mysql_store_result(&mysql);
     rows = mysql_num_rows(res);
@@ -392,7 +395,7 @@ void registe(PACK *recv_pack)
         Insert(pNew);
 
         memset(need, 0, strlen(need));
-        sprintf(need, "insert into user values('%s', '%s')", recv_pack->data.send_name, recv_pack->data.mes);
+        sprintf(need, "insert into userinfo values('%s', '%s')", recv_pack->data.send_name, recv_pack->data.mes);
         mysql_real_query(&mysql, need, strlen(need));
         ch[0] = '1';
     }
@@ -495,7 +498,7 @@ void look_fri(PACK *recv_pack)
     int statu_s;
 
     memset(need, 0, strlen(need));
-    sprintf(need, "select * from relation where user='%s' or oth_user='%s'", recv_pack->data.send_name, recv_pack->data.send_name);
+    sprintf(need, "select * from relationinfo where name1='%s' or name2='%s'", recv_pack->data.send_name, recv_pack->data.send_name);
     mysql_real_query(&mysql, need, strlen(need));
     
     res = mysql_store_result(&mysql);
@@ -624,7 +627,7 @@ void add_fri(PACK *recv_pack)
                     Insert_R(pNew);
 
                     memset(need, 0, strlen(need));
-                    sprintf(need, "insert into relation values('%s', '%s', %d)", recv_pack->data.recv_name, recv_pack->data.send_name, FRIEND);
+                    sprintf(need, "insert into relationinfo values('%s', '%s', %d)", recv_pack->data.recv_name, recv_pack->data.send_name, FRIEND);
                     mysql_real_query(&mysql, need, strlen(need));
                 }
                 else if(recv_pack->data.mes[0] == 'n')
@@ -679,7 +682,7 @@ void del_fri(PACK *recv_pack)
         Delete_R(q);
 
         memset(need, 0, strlen(need));
-        sprintf(need, "delete from relation where (user='%s' and oth_user='%s') or (user='%s' and oth_user='%s')", recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
+        sprintf(need, "delete from relationinfo where (name1='%s' and name2='%s') or (name1='%s' and name2='%s')", recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
         mysql_real_query(&mysql, need, strlen(need));
         ch[0] = '1';
     }
@@ -735,7 +738,7 @@ void shi_fri(PACK *recv_pack)
     {
         q->statu_s = FRI_BLK;
         memset(need, 0, strlen(need));
-        sprintf(need, "update relation set status=%d where (user='%s' and oth_user='%s') or (user='%s' and oth_user='%s')", FRI_BLK, recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
+        sprintf(need, "update relationinfo set status=%d where (name1='%s' and name2='%s') or (name1='%s' and name2='%s')", FRI_BLK, recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
         mysql_real_query(&mysql, need, strlen(need));
         ch[0] = '1';
     }
@@ -769,13 +772,13 @@ void rel_fri(PACK *recv_pack)
     {
         q->statu_s = FRI_BLK;
         memset(need, 0, strlen(need));
-        sprintf(need, "update relation set status=%d where (user='%s' and oth_user='%s') or (user='%s' and oth_user='%s')", FRIEND, recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
+        sprintf(need, "update relationinfo set status=%d where (name1='%s' and name2='%s') or (name1='%s' and name2='%s')", FRIEND, recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
         mysql_real_query(&mysql, need, strlen(need));
         ch[0] = '1';
     }
     send_mes(fd, flag, recv_pack, ch);
-
 }
+
 
 void chat_one(PACK *recv_pack)
 {
@@ -855,7 +858,7 @@ void chat_one(PACK *recv_pack)
         if(recv_pack->data.mes[0] == '1')
         {
             memset(need, 0, strlen(need));
-            sprintf(need, "select * from off_message where user='%s' and oth_user='%s'", recv_pack->data.recv_name, recv_pack->data.send_name);
+            sprintf(need, "select * from off_recordinfo where name1='%s' and name2='%s'", recv_pack->data.recv_name, recv_pack->data.send_name);
             mysql_real_query(&mysql, need, strlen(need));
             res = mysql_store_result(&mysql);
             rows = mysql_num_rows(res);
@@ -867,7 +870,7 @@ void chat_one(PACK *recv_pack)
                 strcpy(pNew->message, row[2]);
                 Insert_RC(pNew);
                 memset(need, 0, strlen(need));
-                sprintf(need, "insert into message values('%s', '%s', '%s')", row[0], row[1], row[2]);
+                sprintf(need, "insert into recordinfo values('%s', '%s', '%s')", row[0], row[1], row[2]);
                 mysql_real_query(&mysql, need, strlen(need));
                 
                 strcpy(recv_pack->rec_info[i].name1, row[0]);
@@ -881,7 +884,7 @@ void chat_one(PACK *recv_pack)
             send_mes(fd, flag, recv_pack, "6");
 
             memset(need, 0, strlen(need));
-            sprintf(need, "delete from off_message where user='%s' and oth_user='%s'", recv_pack->data.recv_name, recv_pack->data.send_name);
+            sprintf(need, "delete from off_recordinfo where name1='%s' and name2='%s'", recv_pack->data.recv_name, recv_pack->data.send_name);
             mysql_real_query(&mysql, need, strlen(need));
             
             t = pHead;
@@ -935,7 +938,7 @@ void chat_one(PACK *recv_pack)
                     Insert_RC(pNew);
 
                     memset(need, 0, strlen(need));
-                    sprintf(need, "insert into message values('%s', '%s', '%s')", recv_pack->data.send_name, recv_pack->data.recv_name, recv_pack->data.mes);
+                    sprintf(need, "insert into recordinfo values('%s', '%s', '%s')", recv_pack->data.send_name, recv_pack->data.recv_name, recv_pack->data.mes);
                     mysql_real_query(&mysql, need, strlen(need));
                     
                     memset(ss, 0, MAX_CHAR);
@@ -951,7 +954,7 @@ void chat_one(PACK *recv_pack)
                 else if(strcmp(t->name, recv_pack->data.recv_name) == 0 && strcmp(t->chat, recv_pack->data.send_name) != 0)
                 {
                     memset(need, 0, strlen(need));
-                    sprintf(need, "insert into off_message values('%s', '%s', '%s')", recv_pack->data.send_name, recv_pack->data.recv_name, recv_pack->data.mes);
+                    sprintf(need, "insert into off_recordinfo values('%s', '%s', '%s')", recv_pack->data.send_name, recv_pack->data.recv_name, recv_pack->data.mes);
                     mysql_real_query(&mysql, need, strlen(need));
                     free(pNew);
                     pNew = NULL;
@@ -971,6 +974,7 @@ void Insert_RC(Recordinfo *pNew)
     p->next = pNew;
     pNew->next = NULL;
 }
+
 
 void check_mes_fri(PACK *recv_pack)
 {
@@ -1014,6 +1018,7 @@ void check_mes_fri(PACK *recv_pack)
     send_mes(fd, flag, recv_pack, ch);
 }
 
+
 void cre_grp(PACK *recv_pack)
 {
     char need[1000];
@@ -1048,7 +1053,7 @@ void cre_grp(PACK *recv_pack)
         Insert_R(pNew);
         
         memset(need, 0, strlen(need));
-        sprintf(need, "insert into relation values('%s', '%s', %d)", recv_pack->data.send_name, recv_pack->data.mes, GRP_OWN);
+        sprintf(need, "insert into relationinfo values('%s', '%s', %d)", recv_pack->data.send_name, recv_pack->data.mes, GRP_OWN);
         mysql_real_query(&mysql, need, strlen(need));
     }
     send_mes(fd, flag, recv_pack, ch);
@@ -1085,7 +1090,7 @@ void add_grp(PACK *recv_pack)
         Insert_R(pNew);
 
         memset(need, 0, strlen(need));
-        sprintf(need, "insert into relation values('%s', '%s', %d)", recv_pack->data.recv_name, recv_pack->data.send_name, GRP);
+        sprintf(need, "insert into relationinfo values('%s', '%s', %d)", recv_pack->data.recv_name, recv_pack->data.send_name, GRP);
         mysql_real_query(&mysql, need, strlen(need));
         send_mes(fd, flag, recv_pack, ch);
         return;
@@ -1171,7 +1176,7 @@ void out_grp(PACK *recv_pack)
         Delete_R(q);
 
         memset(need, 0, strlen(need));
-        sprintf(need, "delete from relation where user='%s' and oth_user='%s'", recv_pack->data.send_name, recv_pack->data.mes);
+        sprintf(need, "delete from relationinfo where name1='%s' and name2='%s'", recv_pack->data.send_name, recv_pack->data.mes);
         mysql_real_query(&mysql, need, strlen(need));
     }
     send_mes(fd, flag, recv_pack, ch);
@@ -1222,7 +1227,7 @@ void del_grp(PACK *recv_pack)
             q = q->next;
         }
         memset(need, 0, strlen(need));
-        sprintf(need, "delete from relation where oth_user='%s'", recv_pack->data.mes);
+        sprintf(need, "delete from relationinfo where name2='%s'", recv_pack->data.mes);
         mysql_real_query(&mysql, need, strlen(need));
     }
     else if(flag_1 == 0 && flag_2 == 1)
@@ -1302,7 +1307,7 @@ void set_grp_adm(PACK *recv_pack)
             t = t->next;
         }
         memset(need, 0, strlen(need));
-        sprintf(need, "update relation set status=%d where user='%s' and oth_user='%s'", GRP_ADM, recv_pack->data.mes, recv_pack->data.recv_name);
+        sprintf(need, "update relationinfo set status=%d where name1='%s' and name2='%s'", GRP_ADM, recv_pack->data.mes, recv_pack->data.recv_name);
         mysql_real_query(&mysql, need, strlen(need));
     }
     else if(flag_3 == 0 && flag_2 == 1 && flag_1 == 1)
@@ -1389,7 +1394,7 @@ void kick_grp(PACK *recv_pack)
             t = t->next;
         }
         memset(need, 0, strlen(need));
-        sprintf(need, "delete from relation where user='%s' and oth_user='%s'", recv_pack->data.mes, recv_pack->data.recv_name);
+        sprintf(need, "delete from relationinfo where name1='%s' and name2='%s'", recv_pack->data.mes, recv_pack->data.recv_name);
         mysql_real_query(&mysql, need, strlen(need));
     }
     else if(flag_3 == 0 && flag_1 == 1 && flag_2 == 1 && flag_4 == 1)
@@ -1445,6 +1450,7 @@ void check_mem_grp(PACK *recv_pack)
 
     send_mes(fd, flag, recv_pack, "");
 }
+
 
 void chat_many(PACK *recv_pack)
 {
@@ -1508,7 +1514,7 @@ void chat_many(PACK *recv_pack)
         if(strcmp(recv_pack->data.mes, "1") == 0)
         {
             memset(need, 0, strlen(need));
-            sprintf(need, "select * from message where oth_user='%s'", recv_pack->data.recv_name);
+            sprintf(need, "select * from recordinfo where name2='%s'", recv_pack->data.recv_name);
             mysql_real_query(&mysql, need, strlen(need));
             res = mysql_store_result(&mysql);
             rows = mysql_num_rows(res);
@@ -1591,7 +1597,7 @@ void chat_many(PACK *recv_pack)
             strcpy(pNew->message, recv_pack->data.mes);
             Insert_RC(pNew);
             memset(need, 0, strlen(need));
-            sprintf(need, "insert into message values('%s', '%s', '%s')", recv_pack->data.send_name, recv_pack->data.recv_name, recv_pack->data.mes);
+            sprintf(need, "insert into recordinfo values('%s', '%s', '%s')", recv_pack->data.send_name, recv_pack->data.recv_name, recv_pack->data.mes);
             mysql_real_query(&mysql, need, strlen(need));
 
             q = pStart;
@@ -1628,7 +1634,6 @@ void chat_many(PACK *recv_pack)
         }
     }
 }
-
 
 void check_mes_grp(PACK *recv_pack)
 {
@@ -1846,9 +1851,11 @@ void send_pack(int fd, PACK *recv_pack, char *ch)
 {
     PACK pack_send;
     memcpy(&pack_send, recv_pack, sizeof(PACK));
+    printf("%s\t%s\n", pack_send.data.recv_name, pack_send.data.send_name);
     strcpy(pack_send.data.recv_name, pack_send.data.send_name);
     strcpy(pack_send.data.send_name, "server");
     strcpy(pack_send.data.mes, ch);
+    printf("%s\t%s\n", pack_send.data.recv_name, pack_send.data.send_name);
     printf("%s\n", pack_send.data.mes);
     pack_send.data.recv_fd = pack_send.data.send_fd;
     pack_send.data.send_fd = fd;
