@@ -2,7 +2,7 @@
 
 ## Algorithm
 
- - 算法
+ 算法
 
 ### Tree
 
@@ -18,19 +18,19 @@
 
 ## C_keshe
 
- - 2019大一C语言课设
+  2019大一C语言课设
 
 ## Daily_learning
 
- - 学习日志
+  学习日志
 
 ## lianbiao
 
- - 一个小链表
+  一个小链表
 
 ## cpp
 
- - C Primer Plus课后练习题
+  C Primer Plus课后练习题
 
 ## Linux_c
 Linuxc编程实战练习项目
