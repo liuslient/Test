@@ -51,8 +51,6 @@
 #define PASSIVE 0
 #define ACTIVE 1
 
-#define ECHOFLAGS (ECHO | ECHOE | ECHOK | ECHONL)
-
 typedef struct _user
 {
     char name[MAX_CHAR];

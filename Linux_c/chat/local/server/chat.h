@@ -18,11 +18,10 @@
 #include<sys/epoll.h>
 #include"pool.h"
 
-
 #define EXIT           -1
 #define REGISTE         1
 #define LOGIN           2
-#define LOOK_FRI        3
+#define CHECK_FRI       3
 #define GET_FRI_STA     4
 #define ADD_FRI         5
 #define DEL_FRI         6
@@ -157,27 +156,25 @@ Recordinfo *pRec = NULL;
 
 PACK Mex_Box[100];
 int sign;
-int book;
+int sign_1;
 File file;
 
-
-User *U_read();     
-Relation *R_read();         
-Recordinfo *RC_read();
+User *User_list();     
+Relation *Relation_list();         
+Recordinfo *Record_list();
 void Insert(User *pNew);
 void Insert_RC(Recordinfo *pNew);
 void Insert_R(Relation *pNew);
 void Delete_R(Relation *pNew);
-void DeleteLink();	
-void DeleteLink_R();	
-void DeleteLink_RC();
-
+void Delete_User_list();	
+void Delete_Relation_list();	
+void Delete_Record_list();
 		
 void *deal(void *recv_pack_t);
 void Exit(PACK *recv_pack);   
 void registe(PACK *recv_pack);
 void login(PACK *recv_pack);
-void look_fri(PACK *recv_pack);
+void check_fri(PACK *recv_pack);
 void get_fri_sta(PACK *recv_pack);  
 void add_fri(PACK *recv_pack);      
 void del_fri(PACK *recv_pack);    
