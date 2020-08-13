@@ -34,7 +34,7 @@
 #define KICK_GRP        14 
 #define CHECK_GRP       15 
 #define CHECK_MUM_GRP   16 
-#define CHAT_ONE        17 
+#define CHAT_FRI        17 
 #define CHAT_GRP        18 
 #define CHECK_MES_FRI   19 
 #define CHECK_MES_GRP   20
@@ -44,13 +44,12 @@
 #define BUFSIZE 1024
 #define MAX_CHAR 200
 #define FRI_MAX 100
-#define MAX_FILE 10000
+#define MAX_FILE 1024 
 
 #define SERV_PORT 8017 
 
 #define PASSIVE 0
 #define ACTIVE 1
-
 
 typedef struct
 {
@@ -115,7 +114,7 @@ void add_fri();
 void del_fri();
 void shi_fri();
 void rel_fri();
-void chat_one();
+void chat_fri();
 void check_mes_fri();
 void Menu_groups();
 void check_grp_menu();

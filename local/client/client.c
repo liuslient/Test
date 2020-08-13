@@ -48,7 +48,7 @@ void *recv_back(void *arg)
         int ret = recv(sock_fd, &recv_pack, sizeof(PACK), MSG_WAITALL);
         if(ret < 0)
             my_err("recv", __LINE__);
-
+            
         if(ret == 0)
         {
             printf("\n\t\t\e[1;31m经过你们不懈的努力，服务器炸了\e[0m\n");
@@ -142,7 +142,7 @@ void *recv_back(void *arg)
             pthread_cond_signal(&cond);
             break;
             
-        case CHAT_ONE:
+        case CHAT_FRI:
             flag = recv_pack.data.mes[0] - '0';
             if(flag == 0)
             {
@@ -155,7 +155,7 @@ void *recv_back(void *arg)
                 printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m\n");
                 printf("\n\t\t\e[1;33m按数字选择你需要的功能\e[0m\n");
                 sign_ive[sign] = ACTIVE;
-                sprintf(mes_box[sign], "好友%s向你发起聊天请求", recv_pack.data.send_name);
+                sprintf(mes_box[sign], "好友%s向你发送离线消息", recv_pack.data.send_name);
                 sign++;
             }
             else if(flag == 2)
@@ -398,7 +398,6 @@ void *recv_back(void *arg)
             else if(strcmp(recv_pack.data.mes, "8888") == 0)
             {
                 memset(mes_file, 0, sizeof(mes_file));
-                mes_file[0] = '_';
                 strcat(mes_file, recv_pack.data.send_name);
                 fd = creat(mes_file, S_IRWXU);
                 close(fd);
@@ -615,7 +614,7 @@ void Menu_friends()
             break;
 
         case 5:
-            chat_one();
+            chat_fri();
             break;
             
         case 6:
@@ -711,9 +710,9 @@ void rel_fri()
     pthread_mutex_unlock(&mutex);
 }
 
-void chat_one()
+void chat_fri()
 {
-    int flag = CHAT_ONE;
+    int flag = CHAT_FRI;
     char friend_name[MAX_CHAR];
     char mes[MAX_CHAR];
     int i = 0;

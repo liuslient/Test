@@ -66,7 +66,7 @@ int main()
     
     printf("创建线程池...\n");
     pool_init();
-    sleep(3);
+    sleep(2);
 
     printf("服务器启动成功！\n");
     printf("等待客户端的接入\n");
@@ -187,8 +187,8 @@ void *deal(void *recv_pack_t)
         rel_fri(recv_pack);
         break;
         
-    case CHAT_ONE:
-        chat_one(recv_pack);
+    case CHAT_FRI:
+        chat_fri(recv_pack);
         break;
         
     case CHECK_MES_FRI:
@@ -341,9 +341,9 @@ void login(PACK *recv_pack)
     send_pack(fd, recv_pack, letter);//给客户端信息
     for(i = 0; i < sign; i++)//sign是未读消息，在后面功能函数有用处 ，离线状态下处理消息盒子信息 
     {
-        if((letter[0] == '1') && strcmp(recv_pack->data.send_name, Mex_Box[i].data.recv_name) == 0 && (Mex_Box[i].type == CHAT_ONE))// 私聊 
+        if((letter[0] == '1') && strcmp(recv_pack->data.send_name, Mex_Box[i].data.recv_name) == 0 && (Mex_Box[i].type == CHAT_FRI))// 私聊 
         {
-            send_mes(fd, CHAT_ONE, &Mex_Box[i], "1");
+            send_mes(fd, CHAT_FRI, &Mex_Box[i], "1");
             sign_1++;
         }
         if((letter[0] == '1') && strcmp(recv_pack->data.send_name, Mex_Box[i].data.send_name) == 0 && (Mex_Box[i].type == CHAT_GRP))//群聊 
@@ -639,9 +639,9 @@ void rel_fri(PACK *recv_pack)
 
 }
 
-void chat_one(PACK *recv_pack)
+void chat_fri(PACK *recv_pack)
 {
-    int flag = CHAT_ONE;
+    int flag = CHAT_FRI;
     char letter[5];
     int fd = recv_pack->data.send_fd;
     char ss[MAX_CHAR];
@@ -751,7 +751,7 @@ void chat_one(PACK *recv_pack)
             {
                 if(strcmp(t->name, recv_pack->data.send_name) == 0)
                 {
-                    t->statu_s = ONE_CHAT;
+                    t->statu_s = FRI_CHAT;
                     strcpy(t->chat, recv_pack->data.recv_name);
                     break;
                 }
@@ -788,7 +788,7 @@ void chat_one(PACK *recv_pack)
             t = pHead;
             while(t)
             {
-                if(strcmp(t->name, recv_pack->data.recv_name) == 0 && strcmp(t->chat, recv_pack->data.send_name) == 0 && (t->statu_s == ONE_CHAT))//A对B聊 
+                if(strcmp(t->name, recv_pack->data.recv_name) == 0 && strcmp(t->chat, recv_pack->data.send_name) == 0 && (t->statu_s == FRI_CHAT))//A对B聊 
                 {
                     fd = t->fd;
                     strcpy(pNew->name1, recv_pack->data.send_name);
@@ -1524,7 +1524,7 @@ void check_mes_grp(PACK *recv_pack)
     send_mes(fd, flag, recv_pack, letter);
 }
 
-void recv_file(PACK *recv_pack)
+void recv_file(PACK *recv_pack)//先存在服务 
 {
     int flag = RECV_FILE;
     int fd = recv_pack->data.send_fd;
@@ -1536,7 +1536,7 @@ void recv_file(PACK *recv_pack)
     int fp;
     User *t = pHead;
     int flag_1 = 0;//判断是否是好友 
-    if(strcmp(recv_pack->data.mes,"8888") == 0)//文件可以发送 
+    if(strcmp(recv_pack->data.mes,"8888") == 0)//成功接收到文件 
     {
         while(t)
         {
@@ -1569,7 +1569,7 @@ void recv_file(PACK *recv_pack)
             send_mes(fd, flag, recv_pack, "1");
         }
         else 
-            send_mes(fd, flag, recv_pack, "0");
+            send_mes(fd, flag, recv_pack, "0");//不是好友，直接凉凉 
     }
     else if(strcmp(recv_pack->data.mes, "ok") == 0)//成功发送文件 
     {
@@ -1706,7 +1706,7 @@ void send_pack(int fd, PACK *recv_pack, char *ch)
         my_err("send", __LINE__);
 }
 
-User *User_list()
+User *User_list()//获取用户信息 
 {
     MYSQL_RES *res = NULL;
     MYSQL_ROW row;
@@ -1738,7 +1738,7 @@ User *User_list()
     return pHead;
 }
 
-Relation *Relation_list()
+Relation *Relation_list()//获取关系 
 {
     MYSQL_RES *res = NULL;
     MYSQL_ROW row;
@@ -1770,7 +1770,7 @@ Relation *Relation_list()
     return pStart;
 }
 
-Recordinfo *Record_list()
+Recordinfo *Record_list()//获取聊天记录 
 {
     MYSQL_RES *res = NULL;
     MYSQL_ROW row;
@@ -1802,7 +1802,7 @@ Recordinfo *Record_list()
     return pRec;
 }
 
-void Delete_User_list()
+void Delete_User_list()//回收用户信息链表 
 {
     User *q = pHead;
     if(pHead == NULL)
@@ -1816,7 +1816,7 @@ void Delete_User_list()
 	pHead = NULL;
 }
 
-void Delete_Relation_list()		
+void Delete_Relation_list()//回收关系链表 
 {
     Relation *q = pStart;
     if(pStart == NULL)
@@ -1830,7 +1830,7 @@ void Delete_Relation_list()
 	pStart = NULL;
 }
 
-void Delete_Record_list()// 
+void Delete_Record_list()// 回收消息链表 
 {
     Recordinfo *q = pRec;
     if(pRec == NULL)

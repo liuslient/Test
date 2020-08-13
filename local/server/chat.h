@@ -35,7 +35,7 @@
 #define KICK_GRP        14 
 #define CHECK_GRP       15 
 #define CHECK_MUM_GRP   16 
-#define CHAT_ONE        17 
+#define CHAT_FRI        17 
 #define CHAT_GRP        18 
 #define CHECK_MES_FRI   19 
 #define CHECK_MES_GRP   20
@@ -50,13 +50,13 @@
 
 #define OFFLINE         0
 #define ONLINE          1
-#define ONE_CHAT        2
+#define FRI_CHAT        2
 #define GRP_CHAT        3
 
 #define BUFSIZE         1024
 #define MAX_CHAR        200
 #define FRI_MAX         100
-#define MAX_FILE        10000
+#define MAX_FILE        1024 
 
 #define SERV_PORT       8017 
 #define LISTENQ         10
@@ -180,7 +180,7 @@ void add_fri(PACK *recv_pack);
 void del_fri(PACK *recv_pack);    
 void shi_fri(PACK *recv_pack);      
 void rel_fri(PACK *recv_pack);     
-void chat_one(PACK *recv_pack);  
+void chat_fri(PACK *recv_pack);  
 void check_mes_fri(PACK *recv_pack);
 void cre_grp(PACK *recv_pack);
 void add_grp(PACK *recv_pack);
