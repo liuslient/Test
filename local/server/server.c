@@ -28,7 +28,7 @@ int main()
         return -1;
     }
 
-    if (mysql_real_connect(&mysql,NULL,"root","new_password","chat_room",0,NULL,0) == NULL) 
+    if (mysql_real_connect(&mysql,NULL,"root","new_password","chatroom",0,NULL,0) == NULL) 
     {
         printf("mysql_real_connect(): %s\n", mysql_error(&mysql));
         return -1;
