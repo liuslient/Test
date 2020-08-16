@@ -1,5 +1,4 @@
 #include"chat.h"
-#include"pool.h"
 
 int main()
 {
@@ -14,7 +13,7 @@ int main()
 
     int epfd,nfds; 
     struct epoll_event ev, events[MAX_EVENTS];  
-    int ret_event;
+    pthread_t pid;
 
     int i = 0;
     len = sizeof(struct sockaddr_in);
@@ -64,9 +63,6 @@ int main()
     ev.events = EPOLLIN;               
     epoll_ctl(epfd, EPOLL_CTL_ADD, sock_fd, &ev);
     
-    printf("创建线程池...\n");
-    pool_init();
-    sleep(2);
 
     printf("服务器启动成功！\n");
     printf("等待客户端的接入\n");
@@ -132,13 +128,13 @@ int main()
                 recv_pack = (PACK *)malloc(sizeof(PACK));
                 memcpy(recv_pack, &recv_t, sizeof(PACK));
                 
-                pool_add(deal, (void *)recv_pack);        
+                if(pthread_create(&pid,NULL,deal,(void *)recv_pack) != 0)
+                    my_err("pthread_create",__LINE__);        
                 
             }
         }
     }
 
-    pool_destroy();
     Delete_User_list();
     Delete_Relation_list();
     Delete_Record_list();
@@ -311,6 +307,8 @@ void login(PACK *recv_pack)
     char letter[5];
     int fd = recv_pack->data.send_fd;
     int i;
+    pthread_t pid1;
+    pthread_t pid2;
 
     User *t = pHead;
     int flag_1 = 0;//检查账号密码是否正确 
@@ -353,12 +351,14 @@ void login(PACK *recv_pack)
         }
         if((letter[0] == '1') && strcmp(recv_pack->data.send_name, Mex_Box[i].data.recv_name) == 0 && (Mex_Box[i].type == ADD_FRI))//添加好友 
         {
-            pool_add(deal, (void *)&Mex_Box[i]);  //根据消息盒子里的信息，开启一个线程 
+            if(pthread_create(&pid1,NULL,deal,(void *)&Mex_Box[i]) != 0)
+                my_err("pthread_create",__LINE__);
             sign_1++;
         }
         if((letter[0] == '1') && strcmp(recv_pack->data.send_name, Mex_Box[i].data.send_name) == 0 && (Mex_Box[i].type == ADD_GRP))//加群 
         {
-            pool_add(deal, (void *)&Mex_Box[i]);  //根据消息盒子里的信息，开启一个线程 
+            if(pthread_create(&pid2,NULL,deal,(void *)&Mex_Box[i]) != 0)
+                my_err("pthread_create",__LINE__); 
             sign_1++;
         }
         if((letter[0] == '1') && strcmp(recv_pack->data.send_name, Mex_Box[i].data.mes) == 0)
@@ -717,7 +717,7 @@ void chat_fri(PACK *recv_pack)
         if(recv_pack->data.mes[0] == '1')//客户端发来的1，根据信息来进行消息记录储存 
         {
             memset(query_str, 0, strlen(query_str));
-            sprintf(query_str, "select * from off_messages where user='%s' and oth_user='%s'", recv_pack->data.recv_name, recv_pack->data.send_name);
+            sprintf(query_str, "select * from off_messages where user='%s' and oth_user='%s'", recv_pack->data.recv_name, recv_pack->data.send_name);//离线消息 
             mysql_real_query(&mysql, query_str, strlen(query_str));
             res = mysql_store_result(&mysql);
             rows = mysql_num_rows(res);
@@ -729,7 +729,7 @@ void chat_fri(PACK *recv_pack)
                 strcpy(pNew->message, row[2]);
                 Insert_RC(pNew);
                 memset(query_str, 0, strlen(query_str));
-                sprintf(query_str, "insert into messages values('%s', '%s', '%s')", row[0], row[1], row[2]);
+                sprintf(query_str, "insert into messages values('%s', '%s', '%s')", row[0], row[1], row[2]);//插入消息记录，等会查看聊天记录时可以直接调用 
                 mysql_real_query(&mysql, query_str, strlen(query_str));
                 
                 strcpy(recv_pack->rec_info[i].name1, row[0]);
@@ -740,10 +740,10 @@ void chat_fri(PACK *recv_pack)
                     break;                          
             }
             recv_pack->rec_info[i].message[0] = '0';
-            send_mes(fd, flag, recv_pack, "6");
+            send_mes(fd, flag, recv_pack, "6");//给另一端反馈 
 
             memset(query_str, 0, strlen(query_str));
-            sprintf(query_str, "delete from off_messages where user='%s' and oth_user='%s'", recv_pack->data.recv_name, recv_pack->data.send_name);
+            sprintf(query_str, "delete from off_messages where user='%s' and oth_user='%s'", recv_pack->data.recv_name, recv_pack->data.send_name);//可以不使用离线了，因为存入盒子里，删除 
             mysql_real_query(&mysql, query_str, strlen(query_str));
             
             t = pHead;
@@ -788,7 +788,7 @@ void chat_fri(PACK *recv_pack)
             t = pHead;
             while(t)
             {
-                if(strcmp(t->name, recv_pack->data.recv_name) == 0 && strcmp(t->chat, recv_pack->data.send_name) == 0 && (t->statu_s == FRI_CHAT))//A对B聊 
+                if(strcmp(t->name, recv_pack->data.recv_name) == 0 && strcmp(t->chat, recv_pack->data.send_name) == 0 && (t->statu_s == FRI_CHAT))//在线 
                 {
                     fd = t->fd;
                     strcpy(pNew->name1, recv_pack->data.send_name);
@@ -803,14 +803,11 @@ void chat_fri(PACK *recv_pack)
                     memset(ss, 0, MAX_CHAR);
                     strcpy(ss,recv_pack->data.recv_name);
                     strcpy(recv_pack->data.recv_name, recv_pack->data.send_name);
-                    time(&now);
-                    str = ctime(&now);
-                    str[strlen(str) - 1] = '\0';
-                    memcpy(recv_pack->data.send_name, str, strlen(str));//打印时间 
+
                     send_mes(fd, flag, recv_pack, recv_pack->data.mes);
                     return;
                 }
-                else if(strcmp(t->name, recv_pack->data.recv_name) == 0 && strcmp(t->chat, recv_pack->data.send_name) != 0)//B对A聊 
+                else if(strcmp(t->name, recv_pack->data.recv_name) == 0 && strcmp(t->chat, recv_pack->data.send_name) != 0)//不在线 ，存入离线消息记录盒子 
                 {
                     memset(query_str, 0, strlen(query_str));
                     sprintf(query_str, "insert into off_messages values('%s', '%s', '%s')", recv_pack->data.send_name, recv_pack->data.recv_name, recv_pack->data.mes);
@@ -1078,7 +1075,7 @@ void del_grp(PACK *recv_pack)
         sprintf(query_str, "delete from relation where oth_user='%s'", recv_pack->data.mes);
         mysql_real_query(&mysql, query_str, strlen(query_str));
     }
-    else if(flag_1 == 0 && flag_2 == 1)//群在权限不够 
+    else if(flag_1 == 0 && flag_2 == 1)//群在但你权限不够 
         letter[0] = '2';
     send_mes(fd, flag, recv_pack, letter);
 }
@@ -1158,11 +1155,11 @@ void set_grp(PACK *recv_pack)
         sprintf(query_str, "update relation set status=%d where user='%s' and oth_user='%s'", GRP_ADM, recv_pack->data.mes, recv_pack->data.recv_name);
         mysql_real_query(&mysql, query_str, strlen(query_str));
     }
-    else if(flag_3 == 0 && flag_2 == 1 && flag_1 == 1)
+    else if(flag_3 == 0 && flag_2 == 1 && flag_1 == 1)// 你权限不够啊 
         letter[0] = '2';
-    else if(flag_1 == 0)
+    else if(flag_1 == 0)// 群里就没有这个人 
         letter[0] = '3';
-    else if(flag_2 == 0)
+    else if(flag_2 == 0)//群没有 
         letter[0] = '0';
     send_mes(fd, flag, recv_pack, letter);
 }
@@ -1339,7 +1336,7 @@ void chat_grp(PACK *recv_pack)//和单聊差不多
         }
     }
 
-    while(q)
+    while(q)// 群在 
     {
         if(strcmp(q->name2, recv_pack->data.recv_name) == 0 && (q->relation >= GRP))
         {
@@ -1348,7 +1345,7 @@ void chat_grp(PACK *recv_pack)//和单聊差不多
         }
         q = q->next;
     }
-    if(flag_1 == 0)
+    if(flag_1 == 0)//群不在 
     {
         letter[0] = '0';
         send_mes(fd, flag, recv_pack, letter);
@@ -1358,7 +1355,7 @@ void chat_grp(PACK *recv_pack)//和单聊差不多
     }
     else
     {
-        if(strcmp(recv_pack->data.mes, "1") == 0)
+        if(strcmp(recv_pack->data.mes, "1") == 0)//接收离线消息 
         {
             memset(query_str, 0, strlen(query_str));
             sprintf(query_str, "select * from messages where oth_user='%s'", recv_pack->data.recv_name);
@@ -1461,10 +1458,6 @@ void chat_grp(PACK *recv_pack)//和单聊差不多
                             bzero(ss, MAX_CHAR);
                             strcpy(ss,recv_pack->data.recv_name);
                             strcpy(recv_pack->data.recv_name, recv_pack->data.send_name);
-                            time(&now);
-                            str = ctime(&now);
-                            str[strlen(str) - 1] = '\0';
-                            memcpy(recv_pack->data.send_name, str, strlen(str));
                             send_mes(fd, flag, recv_pack, recv_pack->data.mes);
                             strcpy(recv_pack->data.send_name, ss);
                             bzero(ss, MAX_CHAR);

@@ -16,7 +16,6 @@
 #include<signal.h>
 #include<mysql.h>
 #include<sys/epoll.h>
-#include"pool.h"
 
 #define EXIT           -1
 #define REGISTE         1
@@ -61,6 +60,7 @@
 #define SERV_PORT       8017 
 #define LISTENQ         10
 #define MAX_EVENTS      1000
+#define MAX_THREAD_NUM  10 
 
 typedef struct _user
 {

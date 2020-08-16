@@ -175,7 +175,7 @@ void *recv_back(void *arg)
                 pthread_cond_signal(&cond);           
             }
             else
-                printf("\n\t\t\e[1;34m%s\n\t\t%s:\e[0m %s\n", recv_pack.data.recv_name, recv_pack.data.send_name, recv_pack.data.mes);
+                printf("\n\t\t\e[1;34m%s:\e[0m %s\n", recv_pack.data.send_name, recv_pack.data.mes);
             break;
             
         case CHECK_MES_FRI:
@@ -345,7 +345,7 @@ void *recv_back(void *arg)
                 pthread_cond_signal(&cond);           
             }
             else
-                printf("\n\t\t\e[1;34m%s\n\t\t%s:\e[0m %s\n", recv_pack.data.recv_name, recv_pack.data.send_name, recv_pack.data.mes);
+                printf("\n\t\t\e[1;\t\t%s:\e[0m %s\n",recv_pack.data.send_name, recv_pack.data.mes);
             break;
 
         
@@ -459,16 +459,21 @@ int login_menu()
 
 int get_choice(char *choice_t)
 {
-    int i;
-    i = atoi(choice_t);
-    if(i<0||i>9)
+    int choice = 0;
+    int i,j; 
+    for(i = 0; i < strlen(choice_t); i++)
+        if(choice_t[i] < '0' || choice_t[i] > '9')
+            return -1;
+    for(i = 0; i < strlen(choice_t); i++)
     {
-    	return 9;
-	}
-	else
-	{
-		return i;
-	}
+        int t = 1;
+        for(j = 1; j < strlen(choice_t)-i; j++)
+        {
+            t *= 10;
+        }
+        choice += t*(int)(choice_t[i] - 48);
+    }
+    return choice;
 }
 
 
@@ -534,53 +539,8 @@ void Menu()
 {
     char choice_s[100];
     int choice;
-    int flag;
     do
     {
-        printf("\n\t\t\033[;34m\33[1m*******************************\033[0m\n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        1.好友管理           \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        2.群管理             \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        3.发送文件           \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        4.未读消息           \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        0.退出               \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*******************************\033[0m\n");
-        printf("\t\tchoice：");
-        scanf("%s",choice_s);
-        choice = get_choice(choice_s);
-        
-        switch(choice)
-        {
-        case 1:
-            Menu_friends();
-            break;
-
-        case 2:
-            Menu_groups();
-            break;
-           
-        case 3:
-            send_file();
-            break;
-
-        case 4:
-            Menu_mes_box();
-            break;
-        
-        default:
-            break;
-        }
-    }while(choice != 0);
-    flag = EXIT;
-    send_pack(flag, user, "server", " ");
-}
-
-void Menu_friends()
-{
-    char choice_s[100];
-    int choice;
-    do
-    {
-
         printf("\n\t\t\033[;34m\33[1m*******************************\033[0m\n");
         printf("\t\t\033[;34m\33[1m*\033[0m        1.查看好友           \033[;34m\33[1m*\033[0m \n");
         printf("\t\t\033[;34m\33[1m*\033[0m        2.添加好友           \033[;34m\33[1m*\033[0m \n");
@@ -588,7 +548,19 @@ void Menu_friends()
         printf("\t\t\033[;34m\33[1m*\033[0m        4.屏蔽好友           \033[;34m\33[1m*\033[0m \n");
         printf("\t\t\033[;34m\33[1m*\033[0m        5.私聊               \033[;34m\33[1m*\033[0m \n");
         printf("\t\t\033[;34m\33[1m*\033[0m        6.解除屏蔽好友       \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        7.聊天记录           \033[;34m\33[1m*\033[0m \n");
+        printf("\t\t\033[;34m\33[1m*\033[0m        7.查看好友聊天记录   \033[;34m\33[1m*\033[0m \n");
+        printf("\t\t\033[;34m\33[1m*\033[0m        8.查看所加群         \033[;34m\33[1m*\033[0m \n");
+        printf("\t\t\033[;34m\33[1m*\033[0m        9.查看群中成员       \033[;34m\33[1m*\033[0m \n");
+        printf("\t\t\033[;34m\33[1m*\033[0m        10.创建群            \033[;34m\33[1m*\033[0m \n");
+        printf("\t\t\033[;34m\33[1m*\033[0m        11.加群              \033[;34m\33[1m*\033[0m \n");
+        printf("\t\t\033[;34m\33[1m*\033[0m        12.退群              \033[;34m\33[1m*\033[0m \n");
+        printf("\t\t\033[;34m\33[1m*\033[0m        13.解散群            \033[;34m\33[1m*\033[0m \n");
+        printf("\t\t\033[;34m\33[1m*\033[0m        14.设置管理员        \033[;34m\33[1m*\033[0m \n");
+        printf("\t\t\033[;34m\33[1m*\033[0m        15.踢人              \033[;34m\33[1m*\033[0m \n");
+        printf("\t\t\033[;34m\33[1m*\033[0m        16.群聊              \033[;34m\33[1m*\033[0m \n");
+        printf("\t\t\033[;34m\33[1m*\033[0m        17.查看群聊天记录    \033[;34m\33[1m*\033[0m \n");
+        printf("\t\t\033[;34m\33[1m*\033[0m        18.发送文件          \033[;34m\33[1m*\033[0m \n");
+        printf("\t\t\033[;34m\33[1m*\033[0m        19.消息盒子          \033[;34m\33[1m*\033[0m \n");
         printf("\t\t\033[;34m\33[1m*\033[0m        0.退出               \033[;34m\33[1m*\033[0m \n");
         printf("\t\t\033[;34m\33[1m*******************************\033[0m\n");
         printf("\t\tchoice：");
@@ -624,7 +596,55 @@ void Menu_friends()
         case 7:
             check_mes_fri();
             break;
+            
+        case 8:
+            check_grp();
+            break;
 
+        case 9:
+            check_mum_grp();
+            break;
+
+        case 10:
+            cre_grp();
+            break;
+           
+        case 11:
+            add_grp();
+            break;
+
+        case 12:
+            del_grp();
+            break;
+
+        case 13:
+            del_grp();
+            break;
+
+        case 14:
+            set_grp();
+            break;
+           
+        case 15:
+            kick_grp();
+            break;
+
+        case 16:
+            chat_grp();
+            break;
+            
+        case 17:
+		     check_mes_grp();
+		     break;
+		     
+		case 18:
+            send_file();
+            break;
+
+        case 19:
+            Menu_mes_box();
+            break;
+        
         default:
             break;
         }
@@ -772,93 +792,6 @@ void check_mes_fri()
     pthread_mutex_unlock(&mutex);
 }
 
-void Menu_groups()
-{
-    char choice_s[100];
-    int choice;
-    do
-    {
-        
-        printf("\n\t\t\033[;34m\33[1m*******************************\033[0m\n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        1.查看群             \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        2.创建群             \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        3.加群               \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        4.退群               \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        5.群管理             \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        6.群聊               \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        7.聊天记录           \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        0.退出               \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*******************************\033[0m\n"); 
-        printf("\t\tchoice：");
-        scanf("%s",choice_s);
-        choice = get_choice(choice_s);
-        
-        switch(choice)
-        {
-        case 1:
-            check_grp_menu();           
-            break;
-
-        case 2:
-            cre_grp();
-            break;
-           
-        case 3:
-            add_grp();
-            break;
-
-        case 4:
-            out_grp();
-            break;
-
-        case 5:
-            power_grp();
-            break;
-
-        case 6:
-            chat_grp();
-            break;
-            
-        case 7:
-		     check_mes_grp();
-		     break;
-
-        default:
-            break;
-        }
-    }while(choice != 0);
-}
-
-void check_grp_menu()
-{
-    char choice_s[100];
-    int choice;
-    do
-    {
-        printf("\n\t\t\033[;34m\33[1m*******************************\033[0m\n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        1.查看所加群         \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        2.查看群中成员       \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        0.退出               \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*******************************\033[0m\n"); 
-        printf("\t\tchoice：");
-        scanf("%s",choice_s);
-        choice = get_choice(choice_s);
-        
-        switch(choice)
-        {
-        case 1:
-            check_grp();
-            break;
-
-        case 2:
-            check_mum_grp();
-            break;
-
-        default:
-            break;
-        }
-    }while(choice != 0);
-}
 
 void check_grp()
 {
@@ -952,41 +885,6 @@ void out_grp()
     pthread_mutex_unlock(&mutex);
 }
 
-void power_grp()
-{
-    char choice_s[100];
-    int choice;
-    do
-    {
-        printf("\n\t\t\033[;34m\33[1m*******************************\033[0m\n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        1.解散群             \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        2.设置管理员         \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        3.踢人               \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        0.退出               \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*******************************\033[0m\n");
-        printf("\t\tchoice：");
-        scanf("%s",choice_s);
-        choice = get_choice(choice_s);
-        
-        switch(choice)
-        {
-        case 1:
-            del_grp();
-            break;
-
-        case 2:
-            set_grp();
-            break;
-           
-        case 3:
-            kick_grp();
-            break;
-
-        default:
-            break;
-        }
-    }while(choice != 0);
-}
 
 void del_grp()
 {
