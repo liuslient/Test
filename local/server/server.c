@@ -662,7 +662,6 @@ void chat_fri(PACK *recv_pack)
             if(strcmp(t->name, recv_pack->data.send_name) == 0)
             {
                 t->statu_s = ONLINE;
-                t->chat[0] = '\0';
                 free(pNew);
                 pNew = NULL;
                 return;
