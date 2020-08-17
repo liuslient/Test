@@ -115,6 +115,19 @@ int main()
                     close(events[i].data.fd);
                     continue;
                 }
+                else if(recv_t.type==EXIT)
+				{
+					 while(t)
+                     {
+                        if(strcmp(t->name, recv_pack->data.send_name) == 0)
+                        {
+                            t->statu_s = OFFLINE;//判断用户状态 
+                            break;
+                        }
+                        t = t->next;
+                    }
+                    close(recv_t.data.send_fd);
+				} 
 
                 printf("\n\e[1;34m****PACK****\e[0m\n");//打印数据包信息 
                 printf("\e[1;34m*\e[0m type      : %d\n", recv_t.type);
@@ -134,10 +147,6 @@ int main()
             }
         }
     }
-
-    Delete_User_list();
-    Delete_Relation_list();
-    Delete_Record_list();
     free(recv_pack);
     close(sock_fd);
     close(epfd);
@@ -239,29 +248,11 @@ void *deal(void *recv_pack_t)
         send_file(recv_pack);
         break;
         
-    case EXIT:
-        Exit(recv_pack);
-        break;
-
     default:
         break;
     }
 }
 
-void Exit(PACK *recv_pack)
-{
-    User *t = pHead;
-    while(t)
-    {
-        if(strcmp(t->name, recv_pack->data.send_name) == 0)
-        {
-            t->statu_s = OFFLINE;//判断用户状态 
-            break;
-        }
-        t = t->next;
-    }
-    close(recv_pack->data.send_fd);
-}
 
 void registe(PACK *recv_pack)
 {
@@ -1793,48 +1784,6 @@ Recordinfo *Record_list()//获取聊天记录
         pEnd = pNew;
     }
     return pRec;
-}
-
-void Delete_User_list()//回收用户信息链表 
-{
-    User *q = pHead;
-    if(pHead == NULL)
-        return;
-    while(pHead)
-    {
-        q = pHead->next;
-        free(pHead);
-        pHead = q;
-    }
-	pHead = NULL;
-}
-
-void Delete_Relation_list()//回收关系链表 
-{
-    Relation *q = pStart;
-    if(pStart == NULL)
-        return;
-    while(pStart)
-    {
-        q = pStart->next;
-        free(pStart);
-        pStart = q;
-    }
-	pStart = NULL;
-}
-
-void Delete_Record_list()// 回收消息链表 
-{
-    Recordinfo *q = pRec;
-    if(pRec == NULL)
-        return;
-    while(pRec)
-    {
-        q = pRec->next;
-        free(pRec);
-        pRec = q;
-    }
-	pRec = NULL;
 }
 
 void Insert(User *pNew)//插入用户信息链表 

@@ -51,9 +51,7 @@ void *recv_back(void *arg)
             
         if(ret == 0)
         {
-            printf("\n\t\t\e[1;31m经过你们不懈的努力，服务器炸了\e[0m\n");
-            printf("\t\t\e[1;31m你们有人终结了你的聊天生涯\e[0m\n");
-            printf("\t\t\e[1;31m再见\e[0m\n");
+            printf("\t\t\e[1;31m服务器崩溃，客户端退出\e[0m\n");
             exit(1);
         }
 
@@ -75,7 +73,7 @@ void *recv_back(void *arg)
             break;
 
         case ADD_FRI:
-            printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m\n");
+            printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m");
             printf("\n\t\t\e[1;33m按数字选择你需要的功能\e[0m\n");
             flag = recv_pack.data.mes[0] - '0';
             if(flag == 0)
@@ -152,10 +150,10 @@ void *recv_back(void *arg)
             }
             else if(flag == 1)
             {
-                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m\n");
+                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m");
                 printf("\n\t\t\e[1;33m按数字选择你需要的功能\e[0m\n");
                 sign_ive[sign] = ACTIVE;
-                sprintf(mes_box[sign], "好友%s向你发送消息%s", recv_pack.data.send_name,recv_pack.data.mes);
+                sprintf(mes_box[sign], "好友%s向你发送消息", recv_pack.data.send_name);
                 sign++;
             }
             else if(flag == 2)
@@ -215,7 +213,7 @@ void *recv_back(void *arg)
                 printf("\n\t\t该群不存在!\n");
             else if(flag == 1)
             {
-                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m\n");
+                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m");
                 printf("\n\t\t\e[1;33m按数字选择你需要的功能\e[0m\n");
                 bzero(grp_name, MAX_CHAR);
                 strcpy(grp_name, recv_pack.file.mes);
@@ -227,7 +225,7 @@ void *recv_back(void *arg)
             }
             else if(flag == 2)
             {
-                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m\n");
+                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m");
                 printf("\n\t\t\e[1;33m按数字选择你需要的功能\e[0m\n");
                 sign_ive[sign] = ACTIVE;
                 sprintf(mes_box[sign], "你已加入群聊%s", recv_pack.data.recv_name);
@@ -235,7 +233,7 @@ void *recv_back(void *arg)
             }
             else if(flag == 3)
             {
-                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m\n");
+                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m");
                 printf("\n\t\t\e[1;33m按数字选择你需要的功能\e[0m\n");
                 sign_ive[sign] = ACTIVE;
                 sprintf(mes_box[sign], "加入群聊%s请求被拒绝", recv_pack.data.recv_name);
@@ -275,7 +273,7 @@ void *recv_back(void *arg)
                 printf("\n\t\t此用户不在群中!\n");
             else if(flag == 6)
             {
-                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m\n");
+                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m");
                 printf("\n\t\t\e[1;33m按数字选择你需要的功能\e[0m\n");
                 sign_ive[sign] = ACTIVE;
                 sprintf(mes_box[sign], "你被设置为群%s的管理员", recv_pack.data.send_name);
@@ -300,7 +298,7 @@ void *recv_back(void *arg)
                 printf("\n\t\t踢人失败!\n");
             else if(flag == 6)
             {
-                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m\n");
+                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m");
                 printf("\n\t\t\e[1;33m按数字选择你需要的功能\e[0m\n");
                 sign_ive[sign] = ACTIVE;
                 sprintf(mes_box[sign], "你被踢出群聊%s", recv_pack.data.send_name);
@@ -331,21 +329,21 @@ void *recv_back(void *arg)
             }
             else if(flag == 1)
             {
-                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m\n");
+                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m");
                 printf("\n\t\t\e[1;33m按数字选择你需要的功能\e[0m\n");
                 sign_ive[sign] = ACTIVE;
                 sprintf(mes_box[sign], "有人进入群聊%s", recv_pack.data.send_name);
                 sign++;
             }
             else if(flag == 2)
-                printf("\n\t\t\e[1;33m群%s有新消息%s\e[0m\n",recv_pack.data.send_name,recv_pack.data.mes);
+                printf("\n\t\t\e[1;33m群%s有新消息\e[0m\n",recv_pack.data.send_name);
             else if(flag == 6)
             {
                 memcpy(&rec_info, &recv_pack.rec_info, sizeof(rec_info));
                 pthread_cond_signal(&cond);           
             }
             else
-                printf("\n\t\t\e[1;\t\t%s:\e[0m %s\n",recv_pack.data.send_name, recv_pack.data.mes);
+                printf("\n\t\t\e\t\t%s:\e[0m %s\n",recv_pack.data.send_name, recv_pack.data.mes);
             break;
 
         
@@ -387,7 +385,7 @@ void *recv_back(void *arg)
         case RECV_FILE:
             if(strcmp(recv_pack.data.mes, "request") == 0)
             {
-                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m\n");
+                printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m");
                 printf("\n\t\t\e[1;33m按数字选择你需要的功能\e[0m\n");
                 sign_ive[sign] = PASSIVE;
                 sprintf(name[sign], "%s", recv_pack.data.send_name);
@@ -560,7 +558,7 @@ void Menu()
         printf("\t\t\033[;34m\33[1m*\033[0m        16.群聊              \033[;34m\33[1m*\033[0m \n");
         printf("\t\t\033[;34m\33[1m*\033[0m        17.查看群聊天记录    \033[;34m\33[1m*\033[0m \n");
         printf("\t\t\033[;34m\33[1m*\033[0m        18.发送文件          \033[;34m\33[1m*\033[0m \n");
-        printf("\t\t\033[;34m\33[1m*\033[0m        19.消息盒子          \033[;34m\33[1m*\033[0m \n");
+        printf("\t\t\033[;34m\33[1m*\033[0m        19.未读消息          \033[;34m\33[1m*\033[0m \n");
         printf("\t\t\033[;34m\33[1m*\033[0m        0.退出               \033[;34m\33[1m*\033[0m \n");
         printf("\t\t\033[;34m\33[1m*******************************\033[0m\n");
         printf("\t\tchoice：");
