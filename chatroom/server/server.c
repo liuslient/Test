@@ -400,14 +400,7 @@ void look_fri(PACK *recv_pack)
                 statu_s = row[2][0] - '0';
                 recv_pack->fri_info.friends_status[i] = statu_s;
                 i++;
-            }
-            else if(strcmp(row[1], recv_pack->data.send_name) == 0)
-            {
-                strcpy(recv_pack->fri_info.friends[i], row[0]);
-                statu_s = row[2][0] - '0';
-                recv_pack->fri_info.friends_status[i] = statu_s;
-                i++;
-            }   
+            } 
         }
         recv_pack->fri_info.friends_num = i;
     }
@@ -457,7 +450,7 @@ void add_fri(PACK *recv_pack)
     Relation *pNew = (Relation *)malloc(sizeof(Relation));
     while(q)
     {
-        if((strcmp(q->name1, recv_pack->data.recv_name) == 0 && strcmp(q->name2, recv_pack->data.send_name) == 0) || (strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.recv_name) == 0))
+        if(strcmp(q->user, recv_pack->data.recv_name) == 0 && strcmp(q->other_user, recv_pack->data.send_name) == 0)
         {
             flag_1 = 1;
             break;
@@ -503,8 +496,8 @@ void add_fri(PACK *recv_pack)
                 else if(recv_pack->data.mes[0] == 'y')
                 {
                     letter[0] = '1';
-                    strcpy(pNew->name1, recv_pack->data.recv_name);
-                    strcpy(pNew->name2, recv_pack->data.send_name);
+                    strcpy(pNew->user, recv_pack->data.recv_name);
+                    strcpy(pNew->other_user, recv_pack->data.send_name);
                     pNew->relation = FRIEND;
                     Insert_R(pNew);
 
@@ -540,7 +533,7 @@ void del_fri(PACK *recv_pack)
     int flag_1 = 0;//判断是否为好友 
     while(q)
     {
-        if((strcmp(q->name1, recv_pack->data.mes) == 0 && strcmp(q->name2, recv_pack->data.send_name) == 0) || (strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.mes) == 0))
+        if(strcmp(q->user, recv_pack->data.send_name) == 0 && strcmp(q->other_user, recv_pack->data.mes) == 0)
         {
             flag_1 = 1;
             break;
@@ -555,7 +548,7 @@ void del_fri(PACK *recv_pack)
         Delete_R(q);//删除好友链表 
 
         memset(query_str, 0, strlen(query_str));
-        sprintf(query_str, "delete from relation where (user='%s' and oth_user='%s') or (user='%s' and oth_user='%s')", recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
+        sprintf(query_str, "delete from relation where (user='%s' and oth_user='%s')", recv_pack->data.send_name, recv_pack->data.mes);
         mysql_real_query(&mysql, query_str, strlen(query_str));
         letter[0] = '1';
     }
@@ -574,7 +567,7 @@ void shi_fri(PACK *recv_pack)
     int flag_1 = 0;//判断是否为好友 
     while(q)
     {
-        if((strcmp(q->name1, recv_pack->data.mes) == 0 && strcmp(q->name2, recv_pack->data.send_name) == 0) || (strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.mes) == 0))
+        if (strcmp(q->user, recv_pack->data.send_name) == 0 && strcmp(q->other_user, recv_pack->data.mes) == 0)
         {
             flag_1 = 1;
             break;
@@ -588,7 +581,7 @@ void shi_fri(PACK *recv_pack)
     {
         q->relation = FRI_BLK;//给好友屏蔽信号 
         memset(query_str, 0, strlen(query_str));
-        sprintf(query_str, "update relation set status=%d where (user='%s' and oth_user='%s') or (user='%s' and oth_user='%s')", FRI_BLK, recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
+        sprintf(query_str, "update relation set status=%d where (user='%s' and oth_user='%s') ", FRI_BLK, recv_pack->data.send_name, recv_pack->data.mes);
         mysql_real_query(&mysql, query_str, strlen(query_str));
         letter[0] = '1';
     }
@@ -608,7 +601,7 @@ void rel_fri(PACK *recv_pack)
     int flag_1 = 0;//判断是否为好友 
     while(q)
     {
-        if((strcmp(q->name1, recv_pack->data.mes) == 0 && strcmp(q->name2, recv_pack->data.send_name) == 0) || (strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.mes) == 0))
+        if (strcmp(q->user, recv_pack->data.send_name) == 0 && strcmp(q->other_user, recv_pack->data.mes) == 0)
         {
             flag_1 = 1;
             break;
@@ -622,7 +615,7 @@ void rel_fri(PACK *recv_pack)
     {
         q->relation = FRIEND;//解除屏蔽状态 
         memset(query_str, 0, strlen(query_str));
-        sprintf(query_str, "update relation set status=%d where (user='%s' and oth_user='%s') or (user='%s' and oth_user='%s')", FRIEND, recv_pack->data.send_name, recv_pack->data.mes, recv_pack->data.mes, recv_pack->data.send_name);
+        sprintf(query_str, "update relation set status=%d where (user='%s' and oth_user='%s') ", FRIEND, recv_pack->data.send_name, recv_pack->data.mes);
         mysql_real_query(&mysql, query_str, strlen(query_str));
         letter[0] = '1';
     }
@@ -672,7 +665,7 @@ void chat_fri(PACK *recv_pack)
 
     while(q)//读取用户信息 
     {
-        if(((strcmp(q->name1,recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.recv_name) == 0) || (strcmp(q->name2,recv_pack->data.send_name) == 0 && strcmp(q->name1, recv_pack->data.recv_name) == 0)) && (q->relation == FRI_BLK))
+        if(( (strcmp(q->other_user,recv_pack->data.send_name) == 0 && strcmp(q->user, recv_pack->data.recv_name) == 0)) && (q->relation == FRI_BLK))
         {
             letter[0] = '3';//被屏蔽了 
             send_mes(fd, flag, recv_pack, letter);
@@ -707,23 +700,23 @@ void chat_fri(PACK *recv_pack)
         if(recv_pack->data.mes[0] == '1')//客户端发来的1，根据信息来进行消息记录储存 
         {
             memset(query_str, 0, strlen(query_str));
-            sprintf(query_str, "select * from off_messages where user='%s' and oth_user='%s'", recv_pack->data.recv_name, recv_pack->data.send_name);//离线消息 
+            sprintf(query_str, "select * from off_messages where user='%s' and oth_user='%s'", recv_pack->data.recv_name, recv_pack->data.send_name);//检查离线消息 
             mysql_real_query(&mysql, query_str, strlen(query_str));
             res = mysql_store_result(&mysql);
             rows = mysql_num_rows(res);
             fields = mysql_num_fields(res);
             while(row = mysql_fetch_row(res))
             {
-                strcpy(pNew->name1, row[0]);
-                strcpy(pNew->name2, row[1]);
+                strcpy(pNew->user, row[0]);
+                strcpy(pNew->other_user, row[1]);
                 strcpy(pNew->message, row[2]);
                 Insert_RC(pNew);
                 memset(query_str, 0, strlen(query_str));
                 sprintf(query_str, "insert into messages values('%s', '%s', '%s')", row[0], row[1], row[2]);//插入消息记录，等会查看聊天记录时可以直接调用 
                 mysql_real_query(&mysql, query_str, strlen(query_str));
                 
-                strcpy(recv_pack->rec_info[i].name1, row[0]);
-                strcpy(recv_pack->rec_info[i].name2, row[1]);
+                strcpy(recv_pack->rec_info[i].user, row[0]);
+                strcpy(recv_pack->rec_info[i].other_user, row[1]);
                 strcpy(recv_pack->rec_info[i].message, row[2]);
                 i++;
                 if(i > 50)
@@ -781,8 +774,8 @@ void chat_fri(PACK *recv_pack)
                 if(strcmp(t->name, recv_pack->data.recv_name) == 0 && strcmp(t->chat, recv_pack->data.send_name) == 0 && (t->statu_s == FRI_CHAT))//在线 
                 {
                     fd = t->fd;
-                    strcpy(pNew->name1, recv_pack->data.send_name);
-                    strcpy(pNew->name2, recv_pack->data.recv_name);
+                    strcpy(pNew->user, recv_pack->data.send_name);
+                    strcpy(pNew->other_user, recv_pack->data.recv_name);
                     strcpy(pNew->message, recv_pack->data.mes);
                     Insert_RC(pNew);
 
@@ -800,7 +793,7 @@ void chat_fri(PACK *recv_pack)
                 else if(strcmp(t->name, recv_pack->data.recv_name) == 0 && strcmp(t->chat, recv_pack->data.send_name) != 0)//不在线 ，存入离线消息记录盒子 
                 {
                     memset(query_str, 0, strlen(query_str));
-                    sprintf(query_str, "insert into off_messages values('%s', '%s', '%s')", recv_pack->data.send_name, recv_pack->data.recv_name, recv_pack->data.mes);
+                    sprintf(query_str, "insert into off_messages values('%s', '%s', '%s')", recv_pack->data.send_name, recv_pack->data.recv_name, recv_pack->data.mes);//插入离线消息 
                     mysql_real_query(&mysql, query_str, strlen(query_str));
                     free(pNew);
                     pNew = NULL;
@@ -823,7 +816,7 @@ void check_mes_fri(PACK *recv_pack)
     int flag_1 = 0;//判断是否好友 
     while(q)
     {
-        if(((strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.mes) == 0) || (strcmp(q->name2, recv_pack->data.send_name) == 0 && strcmp(q->name1, recv_pack->data.mes) == 0)) && (q->relation == FRIEND)) 
+        if(((strcmp(q->user, recv_pack->data.send_name) == 0 && strcmp(q->other_user, recv_pack->data.mes) == 0) && (q->relation == FRIEND))) 
         {
             flag_1 = 1;
             break;
@@ -837,10 +830,10 @@ void check_mes_fri(PACK *recv_pack)
         letter[0] = '1';
         while(p)
         {
-            if((strcmp(p->name1, recv_pack->data.send_name) == 0 && strcmp(p->name2, recv_pack->data.mes) == 0) || (strcmp(p->name2, recv_pack->data.send_name) == 0 && strcmp(p->name1, recv_pack->data.mes) == 0))
+            if(strcmp(p->user, recv_pack->data.send_name) == 0 && strcmp(p->other_user, recv_pack->data.mes) == 0)
             {
-                strcpy(recv_pack->rec_info[i].name1, p->name1);//存储信息 
-                strcpy(recv_pack->rec_info[i].name2, p->name2);
+                strcpy(recv_pack->rec_info[i].user, p->user);//存储信息 
+                strcpy(recv_pack->rec_info[i].other_user, p->other_user);
                 strcpy(recv_pack->rec_info[i].message, p->message);
                 i++;
                 if(i > 40)
@@ -867,7 +860,7 @@ void cre_grp(PACK *recv_pack)
     Relation *pNew = (Relation *)malloc(sizeof(Relation));
     while(q)
     {
-        if(strcmp(q->name2, recv_pack->data.mes) == 0)
+        if(strcmp(q->other_user, recv_pack->data.mes) == 0)
         {
             flag_1 = 1;
             break;
@@ -882,8 +875,8 @@ void cre_grp(PACK *recv_pack)
     else
     {
         letter[0] = '1';
-        strcpy(pNew->name1, recv_pack->data.send_name);
-        strcpy(pNew->name2, recv_pack->data.mes);
+        strcpy(pNew->user, recv_pack->data.send_name);
+        strcpy(pNew->other_user, recv_pack->data.mes);
         pNew->relation = GRP_OWN;
         Insert_R(pNew);
         
@@ -919,8 +912,8 @@ void add_grp(PACK *recv_pack)
         }
         letter[0] = '2';
         printf("%s\n", recv_pack->file.mes);
-        strcpy(pNew->name1, recv_pack->data.recv_name);
-        strcpy(pNew->name2, recv_pack->data.send_name);
+        strcpy(pNew->user, recv_pack->data.recv_name);
+        strcpy(pNew->other_user, recv_pack->data.send_name);
         pNew->relation = GRP;
         Insert_R(pNew);//数据插入链表 
 
@@ -947,10 +940,10 @@ void add_grp(PACK *recv_pack)
     }
     while(q)//读取群信息 
     {
-        if(strcmp(q->name2, recv_pack->data.mes) == 0 && (q->relation == GRP_OWN))
+        if(strcmp(q->other_user, recv_pack->data.mes) == 0 && (q->relation == GRP_OWN))
         {
             flag_1 = 1;
-            strcpy(recv_pack->data.recv_name, q->name1);
+            strcpy(recv_pack->data.recv_name, q->user);
             break;
         }
         q = q->next;
@@ -995,7 +988,7 @@ void out_grp(PACK *recv_pack)
     int flag_1 = 0;//判断群是否存在 
     while(q)
     {
-        if(strcmp(q->name2, recv_pack->data.mes) == 0)
+        if(strcmp(q->other_user, recv_pack->data.mes) == 0)
         {
             flag_1 = 1;
             break;
@@ -1030,7 +1023,7 @@ void del_grp(PACK *recv_pack)
     int flag_2 = 0;//判断群是否存在 
     while(q)
     {
-        if(strcmp(q->name2, recv_pack->data.mes) == 0)
+        if(strcmp(q->other_user, recv_pack->data.mes) == 0)
         {
             flag_2 = 1;
             break;
@@ -1041,7 +1034,7 @@ void del_grp(PACK *recv_pack)
     q = pStart;
     while(q)
     {
-        if(strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.mes) == 0 && (q->relation == GRP_OWN))
+        if(strcmp(q->user, recv_pack->data.send_name) == 0 && strcmp(q->other_user, recv_pack->data.mes) == 0 && (q->relation == GRP_OWN))
         {
             flag_1 = 1;
             break;
@@ -1057,7 +1050,7 @@ void del_grp(PACK *recv_pack)
         q = pStart;
         while(q)
         {
-            if(strcmp(q->name2, recv_pack->data.mes) == 0)
+            if(strcmp(q->other_user, recv_pack->data.mes) == 0)
                 Delete_R(q);
             q = q->next;
         }
@@ -1085,7 +1078,7 @@ void set_grp(PACK *recv_pack)
     int flag_1 = 0;
     while(q)
     {
-        if(strcmp(q->name2, recv_pack->data.recv_name) == 0)
+        if(strcmp(q->other_user, recv_pack->data.recv_name) == 0)
         {
             flag_2 = 1;
             break;
@@ -1096,7 +1089,7 @@ void set_grp(PACK *recv_pack)
     q = pStart;
     while(q)
     {
-        if(strcmp(q->name2, recv_pack->data.recv_name) == 0 && strcmp(q->name1, recv_pack->data.mes) == 0)
+        if(strcmp(q->other_user, recv_pack->data.recv_name) == 0 && strcmp(q->user, recv_pack->data.mes) == 0)
         {
             flag_1 = 1;
             break;
@@ -1107,7 +1100,7 @@ void set_grp(PACK *recv_pack)
     q = pStart;
     while(q)
     {
-        if(strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.recv_name) == 0 && q->relation == GRP_OWN)
+        if(strcmp(q->user, recv_pack->data.send_name) == 0 && strcmp(q->other_user, recv_pack->data.recv_name) == 0 && q->relation == GRP_OWN)
         {
             flag_3 = 1;
             break;
@@ -1121,7 +1114,7 @@ void set_grp(PACK *recv_pack)
         q = pStart;
         while(q)
         {
-            if(strcmp(q->name1, recv_pack->data.mes) == 0 && strcmp(q->name2, recv_pack->data.recv_name) == 0)
+            if(strcmp(q->user, recv_pack->data.mes) == 0 && strcmp(q->other_user, recv_pack->data.recv_name) == 0)
             {
                 q->relation = GRP_ADM;
                 break;
@@ -1170,7 +1163,7 @@ void kick_grp(PACK *recv_pack)
     int flag_4 = 0;
     while(q)
     {
-        if(strcmp(q->name2, recv_pack->data.recv_name) == 0)
+        if(strcmp(q->other_user, recv_pack->data.recv_name) == 0)
         {
             flag_1 = 1;
             break;
@@ -1181,7 +1174,7 @@ void kick_grp(PACK *recv_pack)
     q = pStart;
     while(q)
     {
-        if(strcmp(q->name2, recv_pack->data.recv_name) == 0 && strcmp(q->name1, recv_pack->data.mes) == 0)
+        if(strcmp(q->other_user, recv_pack->data.recv_name) == 0 && strcmp(q->user, recv_pack->data.mes) == 0)
         {
             flag_2 = 1;
             break;
@@ -1192,7 +1185,7 @@ void kick_grp(PACK *recv_pack)
     q = pStart;
     while(q)
     {
-        if(strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.recv_name) == 0 && (q->relation == GRP_OWN || q->relation == GRP_ADM))
+        if(strcmp(q->user, recv_pack->data.send_name) == 0 && strcmp(q->other_user, recv_pack->data.recv_name) == 0 && (q->relation == GRP_OWN || q->relation == GRP_ADM))
         {
             flag_3 = 1;
             break;
@@ -1203,7 +1196,7 @@ void kick_grp(PACK *recv_pack)
     q = pStart;
     while(q)
     {
-        if(strcmp(q->name1, recv_pack->data.mes) == 0 && (q->relation == GRP))
+        if(strcmp(q->user, recv_pack->data.mes) == 0 && (q->relation == GRP))
         {
             flag_4 = 1;
             break;
@@ -1252,9 +1245,9 @@ void check_grp(PACK *recv_pack)
 
     while(q)
     {
-        if(strcmp(q->name1, recv_pack->data.send_name) == 0 && (q->relation == GRP || q->relation == GRP_OWN || q->relation == GRP_ADM))
+        if(strcmp(q->user, recv_pack->data.send_name) == 0 && (q->relation == GRP || q->relation == GRP_OWN || q->relation == GRP_ADM))
         {
-            strcpy(recv_pack->grp_info.groups[i], q->name2);
+            strcpy(recv_pack->grp_info.groups[i], q->other_user);
             i++;
         }
         q = q->next;
@@ -1274,9 +1267,9 @@ void check_mum_grp(PACK *recv_pack)
 
     while(q)
     {
-        if(strcmp(q->name2, recv_pack->data.mes) == 0 && (q->relation == GRP || q->relation == GRP_OWN || q->relation == GRP_ADM))
+        if(strcmp(q->other_user, recv_pack->data.mes) == 0 && (q->relation == GRP || q->relation == GRP_OWN || q->relation == GRP_ADM))
         {
-            strcpy(recv_pack->fri_info.friends[i], q->name1);
+            strcpy(recv_pack->fri_info.friends[i], q->user);
             i++;
         }
         q = q->next;
@@ -1328,7 +1321,7 @@ void chat_grp(PACK *recv_pack)//和单聊差不多
 
     while(q)// 群在 
     {
-        if(strcmp(q->name2, recv_pack->data.recv_name) == 0 && (q->relation >= GRP))
+        if(strcmp(q->other_user, recv_pack->data.recv_name) == 0 && (q->relation >= GRP))
         {
             flag_1 = 1;
             break;
@@ -1359,16 +1352,16 @@ void chat_grp(PACK *recv_pack)//和单聊差不多
                 {
                     if(rows <= 30)
                     {
-                        strcpy(recv_pack->rec_info[i].name1, row[0]);
-                        strcpy(recv_pack->rec_info[i].name2, row[1]);
+                        strcpy(recv_pack->rec_info[i].user, row[0]);
+                        strcpy(recv_pack->rec_info[i].other_user, row[1]);
                         strcpy(recv_pack->rec_info[i].message, row[2]);
                     }
                     else
                     {
                         if(rows - i <= 30)
                         {
-                            strcpy(recv_pack->rec_info[j].name1, row[0]);
-                            strcpy(recv_pack->rec_info[j].name2, row[1]);
+                            strcpy(recv_pack->rec_info[j].user, row[0]);
+                            strcpy(recv_pack->rec_info[j].other_user, row[1]);
                             strcpy(recv_pack->rec_info[j].message, row[2]);
                             j++;
                         }
@@ -1399,19 +1392,19 @@ void chat_grp(PACK *recv_pack)//和单聊差不多
             q = pStart;
             while(q)
             {
-                if(strcmp(q->name1, recv_pack->data.send_name) != 0 && strcmp(q->name2, recv_pack->data.recv_name) == 0 && (q->relation >= GRP))
+                if(strcmp(q->user, recv_pack->data.send_name) != 0 && strcmp(q->other_user, recv_pack->data.recv_name) == 0 && (q->relation >= GRP))
                 {
                     t = pHead;
                     while(t)
                     {
-                        if(strcmp(q->name1, t->name) == 0 && (t->statu_s != OFFLINE))
+                        if(strcmp(q->user, t->name) == 0 && (t->statu_s != OFFLINE))
                         {
                             letter[0] = '1';
                             fd = t->fd;
                             send_mes(fd, flag, recv_pack, letter);
                             break;
                         }
-                        else if(strcmp(q->name1, t->name) == 0 && (t->statu_s == OFFLINE))
+                        else if(strcmp(q->user, t->name) == 0 && (t->statu_s == OFFLINE))
                         {
                             strcpy(recv_t.data.send_name, t->name);
                             strcpy(recv_t.data.recv_name, recv_pack->data.recv_name);
@@ -1426,8 +1419,8 @@ void chat_grp(PACK *recv_pack)//和单聊差不多
         }
         else
         {
-            strcpy(pNew->name1, recv_pack->data.send_name);
-            strcpy(pNew->name2, recv_pack->data.recv_name);
+            strcpy(pNew->user, recv_pack->data.send_name);
+            strcpy(pNew->other_user, recv_pack->data.recv_name);
             strcpy(pNew->message, recv_pack->data.mes);
             Insert_RC(pNew);
             memset(query_str, 0, strlen(query_str));
@@ -1437,12 +1430,12 @@ void chat_grp(PACK *recv_pack)//和单聊差不多
             q = pStart;
             while(q)
             {
-                if(strcmp(q->name2, recv_pack->data.recv_name) == 0 && (q->relation >= GRP))
+                if(strcmp(q->other_user, recv_pack->data.recv_name) == 0 && (q->relation >= GRP))
                 {
                     t = pHead;
                     while(t)
                     {
-                        if(strcmp(q->name1, t->name) == 0 && strcmp(t->chat, recv_pack->data.recv_name) == 0 && (t->statu_s == GRP_CHAT))
+                        if(strcmp(q->user, t->name) == 0 && strcmp(t->chat, recv_pack->data.recv_name) == 0 && (t->statu_s == GRP_CHAT))
                         {
                             fd = t->fd;
                             bzero(ss, MAX_CHAR);
@@ -1476,7 +1469,7 @@ void check_mes_grp(PACK *recv_pack)
     int flag_1 = 0;
     while(q)
     {
-        if(strcmp(q->name1, recv_pack->data.send_name) == 0 && strcmp(q->name2, recv_pack->data.mes) == 0 && (q->relation >= GRP)) 
+        if(strcmp(q->user, recv_pack->data.send_name) == 0 && strcmp(q->other_user, recv_pack->data.mes) == 0 && (q->relation >= GRP)) 
         {
             flag_1 = 1;
             break;
@@ -1490,10 +1483,10 @@ void check_mes_grp(PACK *recv_pack)
         letter[0] = '1';
         while(p)
         {
-            if((strcmp(p->name2, recv_pack->data.mes) == 0)) 
+            if((strcmp(p->other_user, recv_pack->data.mes) == 0)) 
             {
-                strcpy(recv_pack->rec_info[i].name1, p->name1);
-                strcpy(recv_pack->rec_info[i].name2, p->name2);
+                strcpy(recv_pack->rec_info[i].user, p->user);
+                strcpy(recv_pack->rec_info[i].other_user, p->other_user);
                 strcpy(recv_pack->rec_info[i].message, p->message);
                 i++;
                 if(i > 50)
@@ -1740,8 +1733,8 @@ Relation *Relation_list()//获取关系
     while(row = mysql_fetch_row(res))
     {
         pNew = (Relation *)malloc(sizeof(Relation));
-        strcpy(pNew->name1, row[0]);
-        strcpy(pNew->name2, row[1]);
+        strcpy(pNew->user, row[0]);
+        strcpy(pNew->other_user, row[1]);
         pNew->relation = row[2][0] - '0';
         pNew->next = NULL;
         if(pStart == NULL)
@@ -1772,8 +1765,8 @@ Recordinfo *Record_list()//获取聊天记录
     while(row = mysql_fetch_row(res))
     {
         pNew = (Recordinfo *)malloc(sizeof(Recordinfo));
-        strcpy(pNew->name1, row[0]);
-        strcpy(pNew->name2, row[1]);
+        strcpy(pNew->user, row[0]);
+        strcpy(pNew->other_user, row[1]);
         strcpy(pNew->message, row[2]);
         pNew->next = NULL;
         if(pRec == NULL)
@@ -1818,7 +1811,7 @@ void Delete_R(Relation *pNew)//删除关系链表 ，删除好友群
     Relation *ptr;
     while(t)
     {
-        if((strcmp(t->name1, pNew->name1) == 0 && strcmp(t->name2, pNew->name2) == 0) || (strcmp(t->name1, pNew->name2) == 0 && strcmp(t->name2, pNew->name2) == 0))
+        if((strcmp(t->user, pNew->user) == 0 && strcmp(t->other_user, pNew->other_user) == 0) || (strcmp(t->user, pNew->other_user) == 0 && strcmp(t->other_user, pNew->other_user) == 0))
         {
             if(pStart == t)
             {

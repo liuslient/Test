@@ -190,7 +190,7 @@ void *recv_back(void *arg)
                 {
                     while(rec_info[i].message[0] != '0')
                     {
-                        printf("\t\t\e[1;35m%s = = >%s: \e[0m%s\n",rec_info[i].name1, rec_info[i].name2, rec_info[i].message);
+                        printf("\t\t\e[1;35m%s = = >%s: \e[0m%s\n",rec_info[i].user, rec_info[i].other_user, rec_info[i].message);
                         i++;
                     }
                 }
@@ -362,7 +362,7 @@ void *recv_back(void *arg)
                 {
                     while(rec_info[i].message[0] != '0')
                     {
-                        printf("\t\t\e[1;35m%s = = >%s: \e[0m%s\n",rec_info[i].name1, rec_info[i].name2, rec_info[i].message);
+                        printf("\t\t\e[1;35m%s = = >%s: \e[0m%s\n",rec_info[i].user, rec_info[i].other_user, rec_info[i].message);
                         i++;
                     }
                 }
@@ -473,7 +473,6 @@ int get_choice(char *choice_t)
     }
     return choice;
 }
-
 
 void registe()
 {
@@ -757,7 +756,7 @@ void chat_fri()
     {
         while(rec_info[i].message[0] != '0')
         {
-            printf("\t\t\e[1;35m%s = = >%s: \e[0m%s\n",rec_info[i].name1, rec_info[i].name2, rec_info[i].message);
+            printf("\t\t\e[1;35m%s = = >%s: \e[0m%s\n",rec_info[i].user, rec_info[i].other_user, rec_info[i].message);
             i++;
         }
     }
@@ -955,7 +954,7 @@ void chat_grp()
     {
         while(rec_info[i].message[0] != '0')
         {
-            printf("\t\t\e[1;35m%s = = >%s: \e[0m%s\n",rec_info[i].name1, rec_info[i].name2, rec_info[i].message);
+            printf("\t\t\e[1;35m%s = = >%s: \e[0m%s\n",rec_info[i].user, rec_info[i].other_user, rec_info[i].message);
             i++;
         }
     }

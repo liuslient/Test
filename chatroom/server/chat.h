@@ -60,7 +60,6 @@
 #define SERV_PORT       8017 
 #define LISTENQ         10
 #define MAX_EVENTS      1000
-#define MAX_THREAD_NUM  10 
 
 typedef struct _user
 {
@@ -74,16 +73,16 @@ typedef struct _user
 
 typedef struct _relation
 {
-    char name1[MAX_CHAR];
-    char name2[MAX_CHAR];
+    char user[MAX_CHAR];
+    char other_user[MAX_CHAR];
     int relation;
     struct _relation *next;
 }Relation;
 
 typedef struct _recordinfo
 {
-    char name1[MAX_CHAR];
-    char name2[MAX_CHAR];
+    char user[MAX_CHAR];
+    char other_user[MAX_CHAR];
     char message[BUFSIZE];
     struct _recordinfo *next;
 }Recordinfo;
@@ -103,8 +102,8 @@ typedef struct
 
 typedef struct 
 {
-    char name1[MAX_CHAR];
-    char name2[MAX_CHAR];
+    char user[MAX_CHAR];
+    char other_user[MAX_CHAR];
     char message[MAX_CHAR];
 }RECORD_INFO;
 
@@ -135,8 +134,8 @@ typedef struct
 
 typedef struct 
 {
-    char file_name[MAX_THREAD_NUM][MAX_CHAR];
-    char file_send_name[MAX_THREAD_NUM][MAX_CHAR];
+    char file_name[10][MAX_CHAR];
+    char file_send_name[10][MAX_CHAR];
     int sign_file;
 }File;
 
@@ -166,12 +165,8 @@ void Insert(User *pNew);
 void Insert_RC(Recordinfo *pNew);
 void Insert_R(Relation *pNew);
 void Delete_R(Relation *pNew);
-void Delete_User_list();	
-void Delete_Relation_list();	
-void Delete_Record_list();
 		
 void *deal(void *recv_pack_t);
-void Exit(PACK *recv_pack);   
 void registe(PACK *recv_pack);
 void login(PACK *recv_pack);
 void look_fri(PACK *recv_pack);

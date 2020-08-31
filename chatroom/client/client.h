@@ -66,8 +66,8 @@ typedef struct
 
 typedef struct
 {
-    char name1[MAX_CHAR];
-    char name2[MAX_CHAR];
+    char user[MAX_CHAR];
+    char other_user[MAX_CHAR];
     char message[MAX_CHAR];
 }RECORD_INFO;
 
