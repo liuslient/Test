@@ -240,6 +240,13 @@ void *deal(void *recv_pack_t)
         check_mes_grp(recv_pack);
         break;
 
+    case RECV_FILE:
+        recv_file(recv_pack);
+        break;
+
+    case SEND_FILE:
+        send_file(recv_pack);
+        break;
         
     default:
         break;
@@ -348,6 +355,11 @@ void login(PACK *recv_pack)
         if((letter[0] == '1') && strcmp(recv_pack->data.send_name, Mex_Box[i].data.mes) == 0)
         {
             send_mes(fd, Mex_Box[i].type, &Mex_Box[i], "6");//设置管理员/踢人 
+            sign_1++;
+        }
+        if((letter[0] == '1') && strcmp(recv_pack->data.send_name, Mex_Box[i].data.recv_name) == 0 && strcmp(Mex_Box[i].data.mes, "ok") == 0)//准备发文件 
+        {
+            send_file(&Mex_Box[i]);//发送文件 
             sign_1++;
         }
     }
@@ -1486,6 +1498,157 @@ void check_mes_grp(PACK *recv_pack)
     recv_pack->rec_info[i].message[0] = '0';
     
     send_mes(fd, flag, recv_pack, letter);
+}
+
+void recv_file(PACK *recv_pack)//先存在服务 
+{
+    int flag = RECV_FILE;
+    int fd = recv_pack->data.send_fd;
+    int length = 0;
+    int i = 0;
+    char mes[MAX_CHAR * 3];
+    char *name;
+    bzero(mes, MAX_CHAR * 3);
+    int fp;
+    User *t = pHead;
+    int flag_1 = 0;//判断是否是好友 
+    if(strcmp(recv_pack->data.mes,"8888") == 0)//成功接收到文件 
+    {
+        while(t)
+        {
+            if(strcmp(t->name, recv_pack->data.recv_name) == 0)
+            {
+                flag_1 = 1;
+                break;
+            }
+            t = t->next;
+        }
+        if(flag_1 == 1)//是好友 
+        {
+            for(i = 0; i < strlen(recv_pack->data.send_name); i++)//文件名称长度 
+            {
+                if(recv_pack->data.send_name[i] == '/')
+                {
+                    name = strrchr(recv_pack->data.send_name, '/');
+                    name++;
+                    strcat(file.file_name[file.sign_file],name);
+                    break;
+                }
+            }
+            if(i == strlen(recv_pack->data.send_name))
+                strcat(file.file_name[file.sign_file],recv_pack->data.send_name);
+
+            strcpy(file.file_send_name[file.sign_file], recv_pack->data.recv_name);
+            fp = creat(file.file_name[file.sign_file], S_IRWXU);
+            file.sign_file++;
+            close(fp);
+            send_mes(fd, flag, recv_pack, "1");
+        }
+        else 
+            send_mes(fd, flag, recv_pack, "0");//不是好友，直接凉凉 
+    }
+    else if(strcmp(recv_pack->data.mes, "ok") == 0)//成功发送文件 
+    {
+        while(t)
+        {
+            if(strcmp(t->name, recv_pack->data.recv_name) == 0 && (t->statu_s != OFFLINE))
+            {
+                flag_1 = 1;
+                break;
+            }
+            t = t->next;
+        }
+        if(flag_1 == 1) //在线 
+            send_file(recv_pack);
+        else if(flag_1 == 0)//不在线。存到消息盒子 
+            memcpy(&Mex_Box[sign++], recv_pack, sizeof(PACK));    
+    }
+    else
+    {
+        for(i = 0; i < file.sign_file; i++)
+        {
+            if(strcmp(recv_pack->data.recv_name, file.file_send_name[i]) == 0)
+            {
+                fp = open(file.file_name[i], O_WRONLY | O_APPEND);
+                break;
+            }
+        }
+        if(write(fp, recv_pack->file.mes, recv_pack->file.size) < 0)
+            my_err("write", __LINE__);
+        close(fp);
+    }
+}
+
+void send_file(PACK *recv_pack)
+{
+    int flag = SEND_FILE;
+    int fd = recv_pack->data.send_fd;
+    int fd2;
+    int fp;
+    int length = 0;
+    PACK send_file;
+    send_file.type = flag;
+
+    char ss[MAX_CHAR];
+    User *t = pHead;
+    int flag_2 = 0;
+    int i = 0;
+    pthread_mutex_lock(&mutex);
+    while(t)
+    {
+        if(strcmp(t->name, recv_pack->data.recv_name) == 0)
+        {
+            fd2 = t->fd;
+            break;
+        }
+        t = t->next;
+    }
+
+    if(strcmp(recv_pack->data.mes, "ok") == 0)//成功发送 
+    {
+        strcpy(ss,recv_pack->data.recv_name);
+        strcpy(recv_pack->data.recv_name, recv_pack->data.send_name);
+        strcpy(recv_pack->data.send_name, ss);
+        send_mes(fd2, flag, recv_pack, "request");
+    }
+    else if(recv_pack->data.mes[0] == 'y')//接收文件 
+    {
+        for(i = 0; i < file.sign_file; i++)
+            if(strcmp(file.file_send_name[i], recv_pack->data.send_name) == 0)
+                break;
+        send_mes(fd2, flag, recv_pack, "consent");
+        strcpy(recv_pack->data.recv_name, file.file_name[i]);
+        send_mes(fd, flag, recv_pack, "8888");
+
+        strcpy(send_file.data.send_name, recv_pack->data.recv_name);
+        strcpy(send_file.data.recv_name, recv_pack->data.send_name);
+        fp = open(file.file_name[i], O_RDONLY);
+        if(fp == -1)
+            printf("file: %s not find\n", file.file_name[i]);
+        while((length = read(fp, send_file.file.mes, MAX_FILE - 1)) > 0)
+        {
+            send_file.file.size = length;
+            if(send(fd, &send_file, sizeof(PACK), 0) < 0)
+                my_err("send",__LINE__);
+            bzero(send_file.file.mes, MAX_FILE);
+        }
+        printf("发送成功!\n");
+        send_mes(fd, flag, recv_pack, "end");
+        send_mes(fd2, flag, recv_pack, "finish");
+        remove(file.file_name[i]);
+        file.file_send_name[i][0] = '\0';
+        close(fp);
+    }
+    else if(recv_pack->data.mes[0] == 'n')//没有接收文件 
+    {
+        send_mes(fd2, flag, recv_pack, "no");
+        for(i = 0; i < file.sign_file; i++)
+            if(strcmp(file.file_send_name[i], recv_pack->data.send_name) == 0)
+                break;
+        remove(file.file_name[i]);
+        file.file_send_name[i][0] = '\0';
+    }
+    pthread_mutex_unlock(&mutex);
 }
 
 void send_mes(int fd, int type, PACK *recv_pack, char *mes)

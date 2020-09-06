@@ -38,8 +38,10 @@
 #define CHAT_GRP        18 
 #define CHECK_MES_FRI   19 
 #define CHECK_MES_GRP   20
+#define SEND_FILE       21 
+#define RECV_FILE       22 
 
-
+#define BUFSIZE 1024
 #define MAX_CHAR 200
 #define FRI_MAX 100
 #define MAX_FILE 1024 
@@ -78,10 +80,10 @@ typedef struct
     char mes[MAX_CHAR * 3];
 }DATA;
 
-typedef struct 
+typedef struct
 {
     int size;
-    char mes[200];
+    char mes[MAX_FILE];
 }FIle;
 
 typedef struct
@@ -91,7 +93,7 @@ typedef struct
     FIle file;
     FRI_INFO fri_info;
     GROUP_INFO grp_info;
-    RECORD_INFO rec_info[100];
+    RECORD_INFO rec_info[55];
 }PACK;
 
 void my_err(const char *err_string,int line)
@@ -124,6 +126,9 @@ void del_grp();
 void kick_grp();
 void chat_grp();
 void check_mes_grp();
+void recv_file(PACK *recv_pack);
+int get_file(char *send_file_name);
+void send_file();
 void Menu_mes_box();
 
 void send_pack(int type, char *send_name, char *recv_name, char *mes);

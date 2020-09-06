@@ -38,7 +38,8 @@
 #define CHAT_GRP        18 
 #define CHECK_MES_FRI   19 
 #define CHECK_MES_GRP   20
-
+#define RECV_FILE       21 
+#define SEND_FILE       22 
 
 #define FRIEND          1
 #define FRI_BLK         2
@@ -51,8 +52,10 @@
 #define FRI_CHAT        2
 #define GRP_CHAT        3
 
+#define BUFSIZE         1024
 #define MAX_CHAR        200
 #define FRI_MAX         100
+#define MAX_FILE        1024 
 
 #define SERV_PORT       8017 
 #define LISTENQ         10
@@ -80,7 +83,7 @@ typedef struct _recordinfo
 {
     char user[MAX_CHAR];
     char other_user[MAX_CHAR];
-    char message[1024];
+    char message[BUFSIZE];
     struct _recordinfo *next;
 }Recordinfo;
 
@@ -116,7 +119,7 @@ typedef struct
 typedef struct 
 {
     int size;
-    char mes[200];
+    char mes[MAX_FILE];
 }FIle;
 
 typedef struct 
@@ -126,7 +129,7 @@ typedef struct
     FIle file;
     FRI_INFO fri_info;
     GROUP_INFO grp_info;
-    RECORD_INFO rec_info[100];
+    RECORD_INFO rec_info[55];
 }PACK;
 
 typedef struct 
@@ -184,6 +187,8 @@ void check_grp(PACK *recv_pack);
 void check_mum_grp(PACK *recv_pack);
 void chat_grp(PACK *recv_pack);
 void check_mes_grp(PACK *recv_pack);
+void send_file(PACK *recv_pack); 
+void recv_file(PACK *recv_pack);
 void send_mes(int fd, int flag, PACK *recv_pack, char *mes);
 void send_pack(int fd, PACK *recv_pack, char *ch);
 

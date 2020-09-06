@@ -153,7 +153,7 @@ void *recv_back(void *arg)
                 printf("\n\t\t\e[1;33m新消息(在未读消息里查看)\e[0m");
                 printf("\n\t\t\e[1;33m按数字选择你需要的功能\e[0m\n");
                 sign_ive[sign] = ACTIVE;
-                sprintf(mes_box[sign], "好友%s向你发送消息，请进入私聊功能查看", recv_pack.data.send_name);
+                sprintf(mes_box[sign], "好友%s向你发送消息", recv_pack.data.send_name);
                 sign++;
             }
             else if(flag == 2)
@@ -336,7 +336,7 @@ void *recv_back(void *arg)
                 sign++;
             }
             else if(flag == 2)
-                printf("\n\t\t\e[1;33m群%s有新消息,请进入群聊功能查看\e[0m\n",recv_pack.data.send_name);
+                printf("\n\t\t\e[1;33m群%s有新消息\e[0m\n",recv_pack.data.send_name);
             else if(flag == 6)
             {
                 memcpy(&rec_info, &recv_pack.rec_info, sizeof(rec_info));

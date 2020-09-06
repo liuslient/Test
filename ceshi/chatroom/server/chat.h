@@ -51,8 +51,10 @@
 #define FRI_CHAT        2
 #define GRP_CHAT        3
 
+#define BUFSIZE         1024
 #define MAX_CHAR        200
 #define FRI_MAX         100
+#define MAX_FILE        1024 
 
 #define SERV_PORT       8017 
 #define LISTENQ         10
@@ -80,7 +82,7 @@ typedef struct _recordinfo
 {
     char user[MAX_CHAR];
     char other_user[MAX_CHAR];
-    char message[1024];
+    char message[BUFSIZE];
     struct _recordinfo *next;
 }Recordinfo;
 
@@ -116,7 +118,7 @@ typedef struct
 typedef struct 
 {
     int size;
-    char mes[200];
+    char mes[MAX_FILE];
 }FIle;
 
 typedef struct 
@@ -126,7 +128,7 @@ typedef struct
     FIle file;
     FRI_INFO fri_info;
     GROUP_INFO grp_info;
-    RECORD_INFO rec_info[100];
+    RECORD_INFO rec_info[55];
 }PACK;
 
 typedef struct 

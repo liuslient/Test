@@ -40,6 +40,7 @@
 #define CHECK_MES_GRP   20
 
 
+#define BUFSIZE 1024
 #define MAX_CHAR 200
 #define FRI_MAX 100
 #define MAX_FILE 1024 
@@ -78,10 +79,10 @@ typedef struct
     char mes[MAX_CHAR * 3];
 }DATA;
 
-typedef struct 
+typedef struct
 {
     int size;
-    char mes[200];
+    char mes[MAX_FILE];
 }FIle;
 
 typedef struct
@@ -91,7 +92,7 @@ typedef struct
     FIle file;
     FRI_INFO fri_info;
     GROUP_INFO grp_info;
-    RECORD_INFO rec_info[100];
+    RECORD_INFO rec_info[55];
 }PACK;
 
 void my_err(const char *err_string,int line)
