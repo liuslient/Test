@@ -1,0 +1,3 @@
+/home/ubuntu/user-land-filesystem/fs/liufs/build/CMakeFiles/tfs.dir
+/home/ubuntu/user-land-filesystem/fs/liufs/build/CMakeFiles/edit_cache.dir
+/home/ubuntu/user-land-filesystem/fs/liufs/build/CMakeFiles/rebuild_cache.dir

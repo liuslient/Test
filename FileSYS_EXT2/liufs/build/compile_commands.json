@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/home/ubuntu/user-land-filesystem/fs/liufs/build",
+  "command": "/usr/bin/gcc  -I/home/ubuntu/user-land-filesystem/fs/liufs/./include  -D_FILE_OFFSET_BITS=64 -no-pie -g -Wall --pedantic -g -o CMakeFiles/tfs.dir/src/tfs.c.o -c /home/ubuntu/user-land-filesystem/fs/liufs/src/tfs.c",
+  "file": "/home/ubuntu/user-land-filesystem/fs/liufs/src/tfs.c"
+},
+{
+  "directory": "/home/ubuntu/user-land-filesystem/fs/liufs/build",
+  "command": "/usr/bin/gcc  -I/home/ubuntu/user-land-filesystem/fs/liufs/./include  -D_FILE_OFFSET_BITS=64 -no-pie -g -Wall --pedantic -g -o CMakeFiles/tfs.dir/src/tfs_utils.c.o -c /home/ubuntu/user-land-filesystem/fs/liufs/src/tfs_utils.c",
+  "file": "/home/ubuntu/user-land-filesystem/fs/liufs/src/tfs_utils.c"
+}
+]
